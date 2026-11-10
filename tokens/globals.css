@@ -1,0 +1,3020 @@
+/* ============================================================================
+ * KOSUKE TEMPLATE - GLOBAL STYLES
+ * ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+ * IMPORTS
+ * ---------------------------------------------------------------------------- */
+/* L'ORDINE DEI LAYER, DICHIARATO PRIMA DI TUTTO (U139).
+ *
+ * ⚠️ FRA DUE LAYER DECIDE L'ORDINE, NON LA SPECIFICITÀ, e senza questa riga il guasto è
+ * silenzioso: Tailwind dichiara i suoi layer per conto suo e `blocknote` — che entra più
+ * sotto — finisce DOPO `utilities`, quindi una regola della libreria batte una nostra
+ * classe per quanto mirata sia. Misurato: la nota di una tabella dichiarava `text-[7px]`
+ * e rendeva a **13,5**, perché `.bn-default-styles p { font-size: inherit }` sta in
+ * `@layer blocknote` e vinceva; lo stesso capitava al «blocco perduto», che dichiara
+ * 12,5 e rendeva 13,5. Una classe che non fa niente è peggio di una classe assente: chi
+ * la legge crede che il valore sia quello.
+ *
+ * Dichiarando qui l'ordine, `utilities` viene per ultimo e le nostre classi vincono
+ * ovunque dentro l'editor. Le regole della libreria restano dove sono; ciò che cambia è
+ * solo chi passa per ultimo.
+ *
+ * ⚠️ QUESTA RIGA VA IN CIMA, prima di ogni `@import`: la prima dichiarazione d'ordine
+ * che il browser incontra è quella che vale, e Tailwind ne emette una sua. */
+@layer theme, base, components, blocknote, utilities;
+
+@import 'tailwindcss';
+
+/* Dashboard grid (react-grid-layout) — drag/resize block layout. */
+@import 'react-grid-layout/css/styles.css';
+@import 'react-resizable/css/styles.css';
+
+/* L'editor dei report (BlockNote), con la sua veste più in basso.
+ *
+ * Il foglio della libreria entra in un layer suo, e le regole nostre stanno
+ * fuori da ogni layer: una regola senza layer vince su una regola dentro un
+ * layer QUALUNQUE sia la sua specificità e ovunque finisca nel file. Serve,
+ * perché la libreria dichiara i suoi colori due volte — una per il chiaro e una,
+ * più specifica, per lo scuro — e senza il layer la seconda batterebbe la
+ * nostra. */
+@import '@blocknote/shadcn/style.css' layer(blocknote);
+
+/* Reflow più morbido quando i blocchi si spostano per far posto durante drag/resize
+ * (default RGL: 200ms ease — troppo nervoso con molti blocchi che si riposizionano). */
+.react-grid-item {
+  transition-duration: 380ms;
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* Il blocco manipolato segue il cursore senza lag (come il default RGL). */
+.react-grid-item.react-draggable-dragging,
+.react-grid-item.resizing {
+  transition: none;
+}
+/* Anche il placeholder si muove morbido invece di scattare. */
+.react-grid-item.react-grid-placeholder {
+  transition-duration: 280ms;
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Il tema scuro dei blocchi di codice (Shiki, dentro Streamdown).
+ *
+ * Shiki colora ogni token due volte: il colore chiaro in linea e quello scuro in
+ * una custom property (`--shiki-dark`), e a scambiarli sono queste due utility —
+ * che il renderer scrive nel suo markup, dentro `node_modules`, dove Tailwind non
+ * guarda. Senza di loro il CSS non le contiene affatto e in tema scuro il codice
+ * resta coi colori del tema chiaro: testo grigio scurissimo su fondo nero, 1,35:1.
+ * Dichiararle qui è l'unico modo di farle esistere, e le rende nostre come il
+ * resto della cornice del blocco (U26). */
+@source inline('dark:text-(--shiki-dark)! dark:bg-(--shiki-dark-bg)!');
+
+/* ----------------------------------------------------------------------------
+ * CUSTOM VARIANTS
+ * ---------------------------------------------------------------------------- */
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+ * THEME CONFIGURATION
+ * ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+ * COLOR SYSTEM & DESIGN TOKENS
+ * ---------------------------------------------------------------------------- */
+@theme {
+  /* Color Palette - Design System */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Primary Colors */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Secondary Colors */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* State Colors */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Surface Colors */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Chart Colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  /* Semantic: Assets (blue), Liabilities (green) */
+  --color-asset: var(--asset);
+  --color-liability: var(--liability);
+
+  /* Sidebar Colors */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Border Radius System */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Animation Definitions */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-sheet-overlay-in: sheet-overlay-in 0.3s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  --animate-sheet-overlay-out: sheet-overlay-out 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  --animate-sheet-content-in-right: sheet-content-in-right 0.4s cubic-bezier(0.33, 1, 0.68, 1)
+    forwards;
+  --animate-sheet-content-out-right: sheet-content-out-right 0.3s cubic-bezier(0.32, 0.72, 0, 1)
+    forwards;
+
+  /* The live phase block's motion (checkpoint E3), used only through
+   * `motion-safe:` so a reader who asked for less motion gets the same UI, still.
+   *
+   * A ROW ARRIVES BY TRANSFORM AND OPACITY, NEVER BY HEIGHT. Its box is there
+   * the instant it is drawn — that is the fixed-height guarantee the block was
+   * built on — and only its content rises into it, so nothing below the block
+   * can move because a phase was announced.
+   *
+   * THE COLLAPSE IS THE ONE PLACE HEIGHT IS ANIMATED, and it is animated as a
+   * grid track rather than as a pixel count so it needs no measurement: the
+   * block sits in a `grid-rows-[1fr]` wrapper over an `overflow-hidden` child,
+   * and 1fr → 0fr is the whole of it. 250ms here and in `PHASE_COLLAPSE_MS`,
+   * which unmounts the block when this finishes — change one, change the other.
+   *
+   * BOTH COLLAPSE ANIMATIONS START WHERE THE ELEMENT ALREADY IS AND END WHERE IT
+   * ALREADY WOULD BE. The collapsing block is written as collapsed and the line
+   * under it as arrived, so a reader on reduced motion — and a browser that
+   * cannot interpolate a grid track — gets the instant swap this replaces rather
+   * than a block stuck open over the line it was meant to become.
+   *
+   * They are a CROSS-FADE, not two fades: the block is gone by 45% and the line
+   * only begins to arrive there. Overlapping them would show the reader the same
+   * turn's status written twice, on top of itself, for an eighth of a second. */
+  --animate-phase-row-in: phase-row-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-phase-collapse: phase-collapse 250ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  --animate-phase-line-in: phase-line-in 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* A GROUP OF PHASES OPENS AND CLOSES BY HEIGHT (`timeline-lavoro.tsx::GruppoDiFasi`),
+   * the one motion in the column that is allowed to move what sits below it,
+   * because it is the reader's gesture or the column tidying itself: the shadcn
+   * `collapsible-down` / `collapsible-up` pattern over the height Radix measures
+   * into `--radix-collapsible-content-height`. Opacity rides along: five rows
+   * shrinking to nothing at full contrast read as a crush, fading they read as
+   * a fold.
+   *
+   * THE CHAT HAS TWO EASES, NOT ONE. The quintic ease-out of the row entry
+   * (`phase-row-in`) does most of its travel in the first frames and then
+   * settles: right for something arriving, and for the 240ms answer to a click.
+   * The automatic fold takes the collapse's ease (`phase-collapse`, the standard
+   * material curve): at half the duration it is at half the height and half the
+   * opacity, so the rows slide under the group's row for the whole 360ms. On the
+   * ease-out they would do 80% of the travel in the first 100ms, and with the
+   * window anchored to the bottom that jolt is the whole page's.
+   *
+   * THE AUTOMATIC FOLD IS THE SAME KEYFRAMES, SLOWER. When the sixth phase
+   * arrives the five before it fold into their group by themselves; nobody asked
+   * for it, so it takes 360ms where a click's answer takes 240ms, and the eye
+   * follows it instead of registering a jump. The pause before it starts is a
+   * timer in the component (`RITARDO_RIPIEGO_MS`), not a CSS delay: a delay
+   * would run with the trigger already reading closed, chevron pointing right
+   * above five rows still on screen.
+   *
+   * NO `overflow` IN THE KEYFRAMES: the clip is a fixed `overflow-hidden` on the
+   * element (`SCATOLA_GRUPPO`, with the padding that keeps the last row's thread
+   * inside it). Animating `overflow` as a discrete property works in Chrome and
+   * Firefox, but is not guaranteed on older Safari, and the failure would be the
+   * rows painted over the next entry while they move. */
+  --animate-collapsible-down: collapsible-down 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-collapsible-up: collapsible-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-phase-group-fold: collapsible-up 360ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* The group row's own entrance: a plain fade, longer than a phase row's and
+   * without the 6px lift. A row that lands with `phase-row-in` reads as a
+   * flash when it appears ABOVE five rows that are about to fold: the eye has
+   * to see the row settle, then read it, then watch the fold. */
+  --animate-phase-group-in: phase-group-in 450ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* A progress bar whose end is not known (`triage-progress.tsx`): a third of the track slides
+   * across, and again. Used through `motion-safe:` only. */
+  --animate-progress-indeterminate: progress-indeterminate 1.6s cubic-bezier(0.4, 0, 0.2, 1)
+    infinite;
+
+  /* Keyframes for Animations */
+  @keyframes progress-indeterminate {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(300%);
+    }
+  }
+
+  @keyframes phase-row-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes phase-group-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+      opacity: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+      opacity: 1;
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+      opacity: 1;
+    }
+    to {
+      height: 0;
+      opacity: 0;
+    }
+  }
+
+  @keyframes phase-collapse {
+    from {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+    45% {
+      opacity: 0;
+    }
+    to {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+  }
+
+  @keyframes phase-line-in {
+    0%,
+    45% {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes sheet-overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes sheet-overlay-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes sheet-content-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0.85;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  @keyframes sheet-content-out-right {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0.85;
+    }
+  }
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+
+  /* I BLOCCHI DELLA DASHBOARD ENTRANO SALENDO (design del 2026-10-20, paragrafo 3.7): 10px
+   * e una dissolvenza, con la curva che arriva presto e si posa. Solo nella dashboard: la
+   * cornice del report non la prende (`block-card.tsx::AspettoDeiBlocchi`). */
+  --animate-blocco-sale: blocco-sale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  /* LA LINEA DEL KPI SI DISEGNA (`sparkline-del-kpi.tsx`): il consuntivo da sinistra, poi
+   * il velo e il tratto previsto. Il tratto usa `pathLength=1` e `stroke-dasharray: 1`. */
+  --animate-tratto-disegna: tratto-disegna 1.1s cubic-bezier(0.65, 0, 0.35, 1) 0.15s both;
+  --animate-appare-tardi: appare-tardi 0.6s ease 0.9s both;
+
+  @keyframes tratto-disegna {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes appare-tardi {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* LE QUOTE DELLA COMPOSIZIONE CRESCONO DA SINISTRA, una dopo l'altra
+   * (`composizione-in-righe.tsx`, il ritardo lo dà la riga). */
+  --animate-quota-cresce: quota-cresce 0.9s cubic-bezier(0.2, 0.85, 0.2, 1) both;
+
+  @keyframes quota-cresce {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Solo uno spostamento, mai una scala: il grafico si monta mentre la card sale, e una
+   * scala gli darebbe una prima misura sbagliata di qualche pixel che Recharts correggerebbe
+   * come un aggiornamento, saltando l'entrata delle barre (misurato il 2026-10-25). */
+  @keyframes blocco-sale {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* The agent chat's scroll container (`copy-e-gesti.tsx::FINESTRA_SCORREVOLE`),
+ * declared in CSS instead of trusting use-stick-to-bottom's inline style:
+ * the library sets `overflow` on the node in a run-once effect at
+ * `StickToBottom`'s mount, so a remounted subtree below it — a hot reload
+ * that changes the tree's shape, a refactor that wraps the content — is
+ * reborn without it and silently stops scrolling. With the computed value
+ * already `auto`, the library's guard (`overflow === "visible"`) leaves the
+ * node alone. The child selector is structural by necessity: the scroll div
+ * is rendered by `StickToBottom.Content` and takes no className. */
+.finestra-agente > div:first-child {
+  overflow-y: auto;
+}
+
+/* The mute-wait pixel grid (`RigaAttesa`): each cell brightens on its own
+ * delay so a chevron wavefront drives right across the 3×3 grid; the 650ms
+ * cycle is shorter than the full sweep, so two fronts are always in flight.
+ * Plain CSS instead of the `animate-*` utility because the delays must SURVIVE
+ * the shorthand: `animation:` resets `animation-delay`, and the order in which
+ * Tailwind emits utilities is not ours to pin — nth-child rules with higher
+ * specificity are. Reduced motion keeps the dim grid; the ticking time beside
+ * it still says work is happening. */
+@media (prefers-reduced-motion: no-preference) {
+  .cella-attesa {
+    animation: pixel-on 650ms ease-in-out infinite;
+  }
+  /* The chevron wavefront: delay = (column + distance from the middle row)
+   * × 90ms. Cell 4 (middle-left) keeps 0ms — the front starts there. */
+  .cella-attesa:nth-child(1),
+  .cella-attesa:nth-child(5),
+  .cella-attesa:nth-child(7) {
+    animation-delay: 90ms;
+  }
+  .cella-attesa:nth-child(2),
+  .cella-attesa:nth-child(6),
+  .cella-attesa:nth-child(8) {
+    animation-delay: 180ms;
+  }
+  .cella-attesa:nth-child(3),
+  .cella-attesa:nth-child(9) {
+    animation-delay: 270ms;
+  }
+}
+
+@keyframes pixel-on {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  18%,
+  42% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 0.15;
+  }
+}
+
+/* The mute-wait label shimmer (`RigaAttesa`): a highlight sweeps through the
+ * text via background-clip. Scoped to `prefers-reduced-motion: no-preference`
+ * so reduced motion gets the plain muted text the JSX declares as base — the
+ * words never depend on the effect to be readable. */
+@media (prefers-reduced-motion: no-preference) {
+  .testo-shimmer {
+    background-image: linear-gradient(
+      90deg,
+      var(--muted-foreground) 35%,
+      var(--foreground) 50%,
+      var(--muted-foreground) 65%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer-text 1.4s linear infinite;
+  }
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 150%;
+  }
+  100% {
+    background-position: -50%;
+  }
+}
+
+/* Sheet drawer keyframes (global so Tailwind arbitrary animate-[] can reference them) */
+@keyframes sheet-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sheet-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes sheet-content-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes sheet-content-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0.85;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * TYPOGRAPHY SYSTEM
+ * ---------------------------------------------------------------------------- */
+@theme inline {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Formulas / Dashboard navy palette (matches business-plan-analyzer tailwind.config) */
+  --color-navy-50: #f0f4fa;
+  --color-navy-100: #dce4f2;
+  --color-navy-200: #b8c9e5;
+  --color-navy-300: #8faad4;
+  --color-navy-400: #6b8cc2;
+  --color-navy-500: #4a6ea8;
+  --color-navy-600: #2f5490;
+  --color-navy-700: #1e3a6e;
+  --color-navy-800: #162a52;
+  --color-navy-900: #0f1f3d;
+
+  /* Qontica brand tokens — source: docs/design_handoff_file_aziendali/reference/colors_and_type.css */
+  --color-action: var(--piano-blu-1);
+  --color-action-hover: var(--piano-blu-2);
+  --color-qontica-primary: var(--qontica-primary);
+  --color-qontica-deep: var(--qontica-deep);
+  --color-qontica-accent: var(--qontica-accent);
+  --color-qontica-support: var(--qontica-support);
+  --color-qontica-accent-soft: var(--qontica-accent-soft);
+  --color-qontica-surface: var(--qontica-surface);
+  --color-qontica-border: var(--qontica-border);
+  --color-qontica-muted: var(--qontica-muted);
+  --color-qontica-success: var(--qontica-success);
+  --color-deadline-overdue: var(--deadline-overdue);
+  --color-deadline-overdue-foreground: var(--deadline-overdue-foreground);
+  --color-deadline-current: var(--deadline-current);
+  --color-deadline-current-foreground: var(--deadline-current-foreground);
+  --color-deadline-next: var(--deadline-next);
+  --color-deadline-next-foreground: var(--deadline-next-foreground);
+  --color-deadline-later: var(--deadline-later);
+  --color-deadline-later-foreground: var(--deadline-later-foreground);
+  --color-statement-trend-up: var(--statement-trend-up);
+  --color-statement-forecast: #246477;
+  --color-statement-forecast-period: #357f91;
+  --color-statement-historical-period: #355c85;
+  --color-statement-trend-line: var(--statement-ink);
+  --color-statement-trend-forecast: var(--statement-forecast-ink);
+  --color-statement-trend-highlight: var(--statement-highlight);
+  --color-statement-tooltip: var(--statement-paper);
+  --color-statement-tooltip-foreground: var(--statement-ink);
+  --color-statement-tooltip-border: var(--statement-rule);
+  --color-statement-section: var(--statement-section);
+  --color-statement-subgroup: var(--statement-group);
+  --color-statement-subtotal: var(--statement-subtotal);
+  --color-statement-result: var(--statement-result);
+  --color-statement-ink: var(--statement-ink);
+  --color-statement-body: var(--statement-body);
+  --color-statement-secondary: var(--statement-secondary);
+  --color-statement-hover: var(--statement-hover);
+  --color-statement-negative: var(--statement-negative);
+
+  --color-qontica-success-soft: var(--qontica-success-soft);
+  --color-qontica-warning: var(--qontica-warning);
+  --color-qontica-warning-soft: var(--qontica-warning-soft);
+  --color-qontica-danger: var(--qontica-danger);
+  --color-qontica-danger-soft: var(--qontica-danger-soft);
+}
+
+/* ============================================================================
+ * UTILITY CLASSES
+ * ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+ * LAYOUT UTILITIES
+ * ---------------------------------------------------------------------------- */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * COMPONENT-SPECIFIC UTILITIES
+ * ---------------------------------------------------------------------------- */
+/* Global rounded scrollbar – design tokens, rounded thumb and track */
+/*
+  IL BLU DEI VALORI DIGITATI A MANO, come utility dichiarata (G-55).
+
+  Dichiarata qui e non composta al volo nel componente: `text-(--piano-forzato)` in Tailwind e'
+  **ambiguo** — `text-*` serve sia al colore sia alla dimensione del carattere — e non produce
+  nessuna regola. Il difetto e' silenzioso per costruzione: la classe finisce nel markup, il
+  foglio di stile non la conosce, e il numero resta nero senza che niente si lamenti. E' andata
+  esattamente cosi' al primo giro, ed e' il motivo per cui adesso la regola sta accanto al token
+  che usa, in una riga che non si puo' leggere in due modi.
+*/
+@utility valore-forzato {
+  color: var(--piano-forzato);
+}
+
+/*
+  I TRE SEGNI DEL GRAFO DELLA STRUTTURA (G-61), dichiarati qui per la stessa ragione di sopra.
+
+  Sono `color` e non `fill`: le icone della casa disegnano con `currentColor`, quindi il colore
+  del testo e' l'unico posto da cui passa anche il loro tratto. Una classe composta al volo qui
+  sarebbe stata anche peggio che altrove — un'icona che resta del colore del testo non sembra un
+  difetto, sembra una scelta.
+*/
+@utility grafo-generatore {
+  color: var(--piano-grafo-generatore);
+}
+
+@utility grafo-composizione {
+  color: var(--piano-grafo-composizione);
+}
+
+@utility grafo-totale {
+  color: var(--piano-grafo-totale);
+}
+
+/*
+  IL TITOLO DI UN BLOCCO DATI, IN NAVY (U133), dichiarato qui per la stessa ragione di sopra:
+  `text-(--report-titolo)` in Tailwind e' ambiguo — `text-*` serve sia al colore sia alla
+  dimensione — e non produce nessuna regola, quindi il titolo resterebbe nero senza che
+  niente si lamenti.
+
+  ⚠️ IL GEMELLO STA SULLA CARTA: `blocchi-dati-in-pdf.tsx` scrive `COLORE.navy` sulla stessa
+  barra. Il token pero' e' `--report-titolo`, non il navy nudo: nel tema scuro schiarisce, e
+  la barra di un blocco dati sta su fondo carta come i titoli.
+*/
+@utility titolo-di-blocco {
+  color: var(--report-titolo);
+}
+
+/*
+  LA BANDA DELLE INTESTAZIONI DI UNA TABELLA DI NUMERI, NAVY PIENA (U133), dichiarata qui
+  per la stessa ragione del titolo di blocco: le due proprieta' vanno insieme — un fondo
+  senza il suo inchiostro e' una banda navy con sopra il grigio di prima — e in Tailwind
+  la coppia si scriverebbe come due utility separate, libere di divergere.
+
+  ⚠️ E' UNA SUPERFICIE DI MARCA, NON UN TESTO SU FONDO CARTA, e per questo NON legge
+  `--report-titolo` (che nel tema scuro schiarisce, perche' li' il navy sul fondo scuro non
+  si leggerebbe). Qui il navy e' il FONDO: sopra ci va sempre il bianco, e il contrasto e'
+  15,81 nei due temi perche' non dipende dal tema — e' la stessa regola con cui le etichette
+  dei grafici del planning sono fisse, «devono contrastare col riempimento della barra, che
+  e' fisso, non col fondo della pagina, che cambia» (G-44).
+
+  ⚠️ IL GEMELLO STA SULLA CARTA: `blocchi-dati-in-pdf.tsx::cellaDiTesta` scrive
+  `COLORE.navy` e `COLORE.sulNavy` sulle stesse caselle. Il presidio
+  `vestito-editor-nel-css.test.ts` confronta le due case.
+*/
+@utility testata-di-tabella {
+  background-color: var(--piano-blu-1);
+  color: var(--piano-etichetta-chiara);
+}
+
+@utility scrollbar-rounded {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  scrollbar-gutter: stable;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: var(--radius-sm);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+/* The sweep that says a phase is still running (checkpoint E3, retuned in F2).
+ *
+ * A LIGHT TRAVELLING THROUGH THE LETTERS, NOT A BAR BEHIND THEM: the gradient is
+ * clipped to the glyphs, so the title keeps its own shape and the row keeps its
+ * height. Applied only through `motion-safe:` — under reduced motion none of
+ * this exists and the title is painted by its ordinary `text-foreground`.
+ *
+ * IT IS DRAWN BETWEEN SEMANTIC TOKENS, WHICH IS WHAT MAKES IT WORK IN BOTH
+ * THEMES. A hardcoded white sweep is invisible on a light background; a wave
+ * from `--foreground` towards `--muted-foreground` is a soft luminance
+ * excursion whichever way round the theme puts them — dark grey through
+ * near-black in light, light grey through near-white in dark. The trough is
+ * `--foreground`, so the running title keeps the full contrast that marks it as
+ * the row the reader is here to read.
+ *
+ * `-webkit-text-fill-color` rather than `color`, because it wins over whatever
+ * text colour the row already carries regardless of which utility Tailwind
+ * emitted first — the alternative is a shimmer that silently loses the cascade.
+ *
+ * ---------------------------------------------------------------------------
+ * F2: "YOU DO NOT SEE IT IF YOU DO NOT PAY ATTENTION TO IT."
+ *
+ * THE WAVELENGTH IS ABSOLUTE, NOT A PERCENTAGE OF THE ROW, and that is the fix
+ * rather than the tuning. The title span is `flex-1`, so its background box is
+ * the whole width of the row while its glyphs occupy the first couple of
+ * hundred pixels of it. A 250%-of-the-box image therefore travelled 1.5 row
+ * widths per cycle — about 420px/s on a desktop row, 40% of that on a phone —
+ * and the highlight was over the letters for well under half the cycle, at a
+ * speed set by the window rather than by the design. A tile measured in `rem`
+ * travels one tile per cycle whatever the row is: 18rem in 3s is 96px/s
+ * everywhere, and the wave is 1.5–2x the width of a typical phase title, so
+ * there is light on the glyphs at every instant of every cycle.
+ *
+ * IT REPEATS, so the loop is seamless by construction: the tile opens and
+ * closes on `--foreground` and the animation translates it by exactly one
+ * wavelength, which means the frame after the last is the first. That is also
+ * why the wavelength has ONE home — the custom property below, read by the
+ * keyframes — rather than being written as a length in two places that must
+ * agree.
+ *
+ * THE CREST IS AS FAR FROM THE TROUGH AS WCAG AA ALLOWS, PER THEME, and the two
+ * themes needed different answers. Light: `--muted-foreground` is oklch(0.556),
+ * 4.73:1 on white, and the 4.5:1 limit is oklch(0.5681) — 0.012 of Oklab L
+ * away, under 3% of an excursion of 0.411, and no design token lives in the gap
+ * (`--ring` is 2.59:1). It is already at the ceiling. Dark: the same token is
+ * oklch(0.708) and 7.63:1 on `--background`, which is nowhere near the floor —
+ * the dark sweep has been running an excursion of 0.277 against light's 0.411,
+ * a third shallower, for no reason but the token it happened to reuse. Mixing
+ * 82% of it with `--background` gives oklch(0.6067): 5.15:1 on `--background`,
+ * still 4.66:1 on `--card` — the darkest surface in the system, which this
+ * block never sits on but which costs almost nothing to clear — and an
+ * excursion of 0.378, within 8% of light's. */
+@utility phase-title-shimmer {
+  /* The crest, per theme. Both are `--muted-foreground` and `--background`; only
+   * the proportion differs, because only the dark theme had room to spend. */
+  --phase-sweep-crest: var(--muted-foreground);
+
+  @variant dark {
+    --phase-sweep-crest: color-mix(in oklab, var(--muted-foreground) 82%, var(--background));
+  }
+
+  /* One wavelength — the band, and the distance the animation travels. */
+  --phase-sweep-wavelength: 18rem;
+
+  background-image: linear-gradient(
+    100deg,
+    var(--foreground) 0%,
+    var(--phase-sweep-crest) 50%,
+    var(--foreground) 100%
+  );
+  background-size: var(--phase-sweep-wavelength) 100%;
+  background-repeat: repeat-x;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: phase-title-shimmer 3s linear infinite;
+}
+
+@keyframes phase-title-shimmer {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: var(--phase-sweep-wavelength);
+  }
+}
+
+@utility terminal-mobile-scroll {
+  /* Mobile terminal scroll optimizations */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+/* ============================================================================
+ * BASE LAYER STYLES
+ * ============================================================================ */
+
+@layer base {
+  /* ----------------------------------------------------------------------------
+   * CSS CUSTOM PROPERTIES - LIGHT THEME (DEFAULT)
+   * ---------------------------------------------------------------------------- */
+  /* `.cattura-in-chiaro` RIPORTA IL TEMA CHIARO SU UN SOTTOALBERO (U84).
+   *
+   * ⚠️ È UNA COPPIA DI SELETTORI, NON UNA SECONDA TAVOLOZZA: i token del tema chiaro
+   * stanno scritti una volta sola, qui sotto, e questa classe li ridichiara
+   * SULL'ELEMENTO — dove battono l'eredità del `.dark` che vive sull'`<html>`.
+   * Duplicarli sarebbe la seconda casa di quaranta colori.
+   *
+   * ⚠️ SERVE A UNA COSA SOLA: la fotografia di un blocco che finisce nel `.docx`
+   * (`cattura-del-blocco.ts`). La libreria di cattura copia negli attributi lo stile
+   * CALCOLATO di ogni nodo, quindi il tema chiaro deve valere davvero mentre si
+   * fotografa — e chi esporta col tema scuro addosso deve consegnare lo stesso file di
+   * chi esporta in chiaro. Il gemello del nome sta in `cattura-del-blocco.ts::TEMA_CHIARO`. */
+  :root,
+  .cattura-in-chiaro {
+    /* Design System */
+    --radius: 0.65rem;
+
+    /* Core Colors */
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+
+    /* Surface Colors */
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+
+    /* Brand Colors */
+    --primary: var(--qontica-accent);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+
+    /* Neutral Colors */
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+
+    /* State Colors */
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    /* Status Colors */
+    --status-pending-bg: #fef3c7;
+    --status-pending-foreground: #92400e;
+    --status-complete-bg: #ecfdf5;
+    --status-complete-foreground: #065f46;
+    --status-complete-border: #a7f3d0;
+    --status-processing-bg: #eff6ff;
+    --status-processing-foreground: #1e40af;
+    --status-processing-border: #bfdbfe;
+    --status-failed-bg: #fef2f2;
+    --status-failed-foreground: #991b1b;
+    --status-failed-border: #fecaca;
+    --status-failed-bg: #fef2f2;
+    --status-failed-foreground: #991b1b;
+    --status-failed-border: #fecaca;
+
+    /* Interactive Elements */
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+
+    /* Qontica semantic brand colors */
+    --qontica-primary: #142238;
+    --qontica-deep: #1b4267;
+    --qontica-accent: #355e99;
+    --qontica-support: #5e85ae;
+    --qontica-accent-soft: #e6efff;
+    --qontica-surface: #f7f8fb;
+    --qontica-border: #e1e7f0;
+    --qontica-muted: #575757;
+    --qontica-success: #00a595;
+    --deadline-overdue: #f7e8ed;
+    --deadline-overdue-foreground: #7f2945;
+    --deadline-current: #fceceb;
+    --deadline-current-foreground: #9b3337;
+    --deadline-next: #fbf3d8;
+    --deadline-next-foreground: #705813;
+    --deadline-later: #e8f4eb;
+    --deadline-later-foreground: #28643b;
+    --statement-trend-up: oklch(0.62 0.18 145);
+    --qontica-success-soft: #daf2ee;
+    --qontica-warning: #f0ac49;
+    --qontica-warning-soft: #ffe9cc;
+    --qontica-danger: #b23a3a;
+    --qontica-danger-soft: #f4dcdc;
+
+    /*
+      Palette dei grafici del planning (G-44, decisa da Marco il 2026-08-17).
+
+      Due scale ancorate ai tre colori di marca: navy fissa il livello 1 dei blu, marrone il
+      livello 2 dei caldi, sabbia il livello 6. I salti di luminosita' sono regolari, ed e'
+      quello che permette di proseguire da una scala all'altra senza taglio netto.
+
+      Non sono `--chart-*`: quelli restano ai grafici del resto dell'applicazione, e cambiano
+      col tema. Questi **non cambiano**, perche' sono colori di marca e non tinte semantiche.
+      Le due etichette sono fisse per la stessa ragione: devono contrastare col riempimento
+      della barra, che e' fisso, non col fondo della pagina, che cambia.
+    */
+    --piano-blu-1: #022051;
+    --piano-blu-2: #153765;
+    --piano-blu-3: #34567d;
+    --piano-blu-4: #567594;
+    --piano-blu-5: #7d95aa;
+    --piano-blu-6: #a6b6c3;
+    --piano-caldo-1: #391913;
+    --piano-caldo-2: #4c3026;
+    --piano-caldo-3: #6b4b3c;
+    --piano-caldo-4: #8b6953;
+    --piano-caldo-5: #ab8a6e;
+    --piano-caldo-6: #ccae8b;
+    --piano-etichetta-chiara: #ffffff;
+    --piano-etichetta-scura: #1b1b1b;
+    /*
+      IL BLU DEI VALORI DIGITATI A MANO (G-55, deciso da Marco il 2026-08-17).
+
+      E' la convenzione dei modelli di investment banking: input blu, formula nera. Il blu puro
+      e' quello che quei modelli usano, ed e' il motivo per cui chi li legge lo riconosce senza
+      che nessuno gli spieghi la legenda.
+
+      Ha un gemello nel tema scuro, e li' non e' un vezzo: il blu puro su fondo scuro da' un
+      contrasto di 1,9 su 21, cioe' un numero che non si legge. Gli altri colori di questa
+      palette non cambiano col tema perche' sono riempimenti di barre; questo e' testo.
+    */
+    --piano-forzato: #0000ff;
+
+    /*
+      I TRE SEGNI DEL GRAFO DELLA STRUTTURA (G-61, 2026-08-17).
+
+      Sono livelli della palette qui sopra, non tinte nuove: chi genera sul blu di mezzo, chi
+      compone sul caldo, il totale della linea sul navy, cioe' l'estremo della stessa scala dei
+      generatori — e' dove tutto confluisce, non un'altra famiglia.
+
+      Ogni famiglia ha un gemello chiaro nel tema scuro, **della sua stessa scala**: qui il colore
+      e' tratto sottile su fondo carta, e il fondo carta cambia col tema (il navy su fondo scuro
+      da' un contrasto di 1,3 su 21). E' la stessa ragione di `--piano-forzato`.
+    */
+    --piano-grafo-generatore: #34567d;
+    --piano-grafo-composizione: #6b4b3c;
+    --piano-grafo-totale: #022051;
+
+    /*
+      I COLORI DEI FLUSSI DEL REPORTING (assetto organizzativo, giro di UX del 2026-09-12).
+
+      Prima erano i `--chart-*`, cioe' un arcobaleno che cambia anche famiglia fra chiaro e
+      scuro. Qui sono cinque livelli delle due scale di marca — i blu di Qontica e i caldi della
+      palette del planning — presi alternati, blu e caldo, cosi' due flussi vicini non si
+      confondono. Cinque e non sette: oltre il quinto il colore non distingue piu' niente, e a
+      distinguere resta la parola, che sull'arco c'e' sempre (D-05).
+
+      Ogni livello ha il suo gemello chiaro nel tema scuro, **della sua stessa scala**: e' un
+      tratto sottile su fondo carta, e il fondo carta cambia col tema. Stessa ragione di
+      `--piano-grafo-*`.
+    */
+    --assetto-flusso-1: #1b4267; /* qontica-deep */
+    --assetto-flusso-2: #8b6953; /* piano-caldo-4 */
+    --assetto-flusso-3: #5e85ae; /* qontica-support */
+    --assetto-flusso-4: #34567d; /* piano-blu-3 */
+    --assetto-flusso-5: #6b4b3c; /* piano-caldo-3 */
+
+    /*
+      L'ombra delle caselle dell'organigramma: il navy di marca, quasi trasparente. Su fondo
+      chiaro carta e fondo sono tutti e due bianchi, e le caselle si staccavano solo per il
+      bordo; l'ombra le solleva senza appesantire il bordo. Non ha gemello scuro perche' li' a
+      staccarle e' gia' il fondo (`--qontica-surface` sta sotto `--card`).
+    */
+    --assetto-ombra: #142238;
+
+    /*
+      LE TRE TINTE DEL REPORT (U133, decise dall'owner il 2026-09-07).
+
+      Il colore come STRUTTURA: il titolo di sezione sul navy, il secondo livello sul blu di
+      mezzo, il terzo sul blu chiaro — tre gradini che calano insieme al corpo, e che
+      dicono a chi sfoglia dove finisce un capitolo senza contare le misure. Il titolo di un
+      blocco dati prende il navy: la sua barra e' una testata anche lei.
+
+      Sono livelli della palette del planning, non tinte nuove: `--piano-blu-1`,
+      `--piano-blu-3` e `--piano-blu-4`.
+
+      ⚠️ IL TERZO ERA `--foreground`, E IL NERO NON ERA UN GRADINO: su fondo chiaro
+      `#0a0a0a` misura 19,80 su 21 contro i 15,81 del navy, cioe' il titolo piu' piccolo
+      contrastava PIU' di quello che apre la sezione — la scala del colore andava
+      all'incontrario di quella dei corpi, e sul PDF di un report si vedeva.
+
+      ⚠️ IL QUARTO BLU E NON IL QUINTO, ed e' una misura e non un gusto: il passo 1-3
+      direbbe 5, ma `--piano-blu-5` su fondo chiaro sta a 3,11, sotto il 4,5 che la WCAG 2.1
+      AA chiede a un testo di questo corpo. `--piano-blu-4` sta a 4,81, ed e' il gradino piu'
+      chiaro che passa.
+
+      Ogni famiglia ha un gemello chiaro nel tema scuro, ed e' la stessa ragione di
+      `--piano-forzato` e dei tre segni del grafo qui sopra: sono TESTO, e il fondo su cui
+      poggiano cambia col tema. Misurato: sul fondo chiaro il navy da' 15,81 su 21, il blu di
+      mezzo 7,57 e il blu chiaro 4,81; sul fondo scuro cadrebbero a 1,25, 2,61 e 3,73, cioe'
+      titoli che non si leggono. Il gemello dei primi due e' il livello della SUA scala che
+      su fondo scuro si vede: 9,52 e 6,37. Il presidio `vestito-editor-nel-css.test.ts` rifa'
+      i conti, tutti e sei.
+
+      ⚠️ E IL TERZO GEMELLO E' UN'ECCEZIONE MISURATA, dichiarata qui e pinnata di la': in
+      scuro la scala di marca ha finito i gradini che passano il 4,5 — `--piano-blu-6` e
+      `--piano-blu-5` se li prendono i primi due livelli, e il quarto blu sul fondo scuro sta
+      a 4,12. Le alternative erano peggiori tutte e due: `--foreground` rimetterebbe il terzo
+      livello sopra il primo (il difetto appena chiuso), e una tinta fuori dalla palette
+      sarebbe un colore di marca inventato. 4,12 sta largo sopra il 3 che la WCAG chiede al
+      testo grande, e un titolo di terzo livello e' 18px in neretto — a un capello dai 14pt
+      in neretto che fanno «grande».
+
+      ⚠️ SULLA CARTA I NUMERI SONO FISSI, e non sono un gemello di questi token: il
+      PDF e' chiaro sempre, quindi `stile-del-pdf.ts::COLORE` porta i soli valori del tema
+      chiaro, ricopiati a mano come ogni altro colore di la'.
+    */
+    --report-titolo: #022051;
+    --report-sottotitolo: #34567d;
+    --report-terzo-titolo: #567594;
+
+    /* Data Visualization */
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    /* Semantic: Assets = blue, Liabilities = green (contrast) */
+    --asset: oklch(0.45 0.2 264);
+    --liability: oklch(0.55 0.18 162);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+
+    /* Sidebar Component */
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+
+  /* ----------------------------------------------------------------------------
+   * CSS CUSTOM PROPERTIES - DARK THEME
+   * ---------------------------------------------------------------------------- */
+  .dark {
+    /* Core Colors */
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+
+    /* Surface Colors */
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+
+    /* Brand Colors */
+    --primary: var(--qontica-accent);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+
+    /* Neutral Colors */
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+
+    /* State Colors */
+    --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: oklch(0.985 0 0);
+
+    /* Status Colors */
+    --status-pending-bg: #fef3c7;
+    --status-pending-foreground: #92400e;
+
+    /* Interactive Elements */
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+
+    /* Qontica semantic brand colors */
+    --qontica-primary: #e6efff;
+    --qontica-deep: #8bbbe6;
+    --qontica-accent: #8bbbe6;
+    --qontica-support: #5e85ae;
+    --qontica-accent-soft: #17263a;
+    --qontica-surface: #17202d;
+    --qontica-border: #2d4563;
+    --qontica-muted: #bbbbbb;
+    --qontica-success: #56c9ba;
+    --deadline-overdue: #35252d;
+    --deadline-overdue-foreground: #e3b2c3;
+    --deadline-current: #382727;
+    --deadline-current-foreground: #e9b2b2;
+    --deadline-next: #352f20;
+    --deadline-next-foreground: #ddcc91;
+    --deadline-later: #22342a;
+    --deadline-later-foreground: #a5d2b2;
+    --statement-trend-up: oklch(0.76 0.18 145);
+    --qontica-success-soft: #123b38;
+    --qontica-warning: #f0ac49;
+    --qontica-warning-soft: #3d2d18;
+    --qontica-danger: #e99a9a;
+    --qontica-danger-soft: #3d2020;
+
+    /* Il blu dei valori digitati a mano, schiarito: su fondo scuro il blu puro non si legge. */
+    --piano-forzato: #7da2ff;
+
+    /* I tre segni del grafo, schiariti: stesse due scale, il livello che si vede su fondo scuro. */
+    --piano-grafo-generatore: #7d95aa;
+    --piano-grafo-composizione: #ab8a6e;
+    --piano-grafo-totale: #a6b6c3;
+
+    /* I flussi del reporting, schiariti: stessa scala e stesso posto, il livello che si vede qui. */
+    --assetto-flusso-1: #8bbbe6;
+    --assetto-flusso-2: #ccae8b;
+    --assetto-flusso-3: #a6b6c3;
+    --assetto-flusso-4: #7d95aa;
+    --assetto-flusso-5: #ab8a6e;
+
+    /* I titoli del report, schiariti: stessa scala dei blu, il livello che su fondo scuro si
+       legge. Il navy `#022051` ci darebbe 1,25 su 21 e il blu di mezzo 2,61 — cioe' due
+       titoli invisibili; `--piano-blu-6` e `--piano-blu-5` stanno a 9,52 e 6,37.
+
+       ⚠️ IL TERZO NON SCHIARISCE, E RESTA `--piano-blu-4`: la scala di marca ha finito i
+       gradini che passano il 4,5 — i due sopra se li prendono i primi due livelli — e il
+       quarto blu sul fondo scuro misura 4,12. E' un'eccezione DICHIARATA, non una svista:
+       il perche' per esteso sta accanto ai token del tema chiaro. */
+    --report-titolo: #a6b6c3;
+    --report-sottotitolo: #7d95aa;
+    --report-terzo-titolo: #567594;
+
+    /* Data Visualization */
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    /* Semantic: Assets = blue, Liabilities = green (contrast) */
+    --asset: oklch(0.65 0.2 264);
+    --liability: oklch(0.7 0.16 162);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+
+    /* Sidebar Component */
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+
+  /* ----------------------------------------------------------------------------
+   * TAILWIND V4 COMPATIBILITY
+   * ---------------------------------------------------------------------------- */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /*
+    LO SPAZIO DELLA BARRA DI SCORRIMENTO C'E' SEMPRE, anche quando la barra non c'e'.
+
+    Senza, una pagina che diventa piu' alta di colpo — un raggruppamento del planning che si
+    apre e aggiunge righe — fa comparire la barra verticale, e la comparsa **restringe** l'area
+    utile: tutto il contenuto scatta a sinistra di una decina di pixel. Chi stava guardando una
+    riga la vede saltare nel momento esatto in cui la sta leggendo, e il salto si ripete a ogni
+    apertura e chiusura.
+
+    `stable` riserva la colonna una volta per tutte: la barra compare dentro uno spazio che c'era
+    gia', e non sposta niente.
+  */
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  .status-badge-pending {
+    background-color: var(--status-pending-bg);
+    color: var(--status-pending-foreground) !important;
+    border-color: var(--status-pending-foreground) !important;
+  }
+
+  .status-badge-complete {
+    background-color: var(--status-complete-bg);
+    color: var(--status-complete-foreground) !important;
+    border-color: var(--status-complete-border) !important;
+  }
+
+  .status-badge-processing {
+    background-color: var(--status-processing-bg);
+    color: var(--status-processing-foreground) !important;
+    border-color: var(--status-processing-border) !important;
+  }
+
+  .status-badge-failed {
+    background-color: var(--status-failed-bg);
+    color: var(--status-failed-foreground) !important;
+    border-color: var(--status-failed-border) !important;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+  }
+
+  .dark input[data-com-onepassword-filled='light'] {
+    color: var(--background) !important;
+  }
+
+  [data-slot='dialog-content'],
+  [data-slot='scroll-area-viewport'],
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .overflow-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  [data-slot='dialog-content']::-webkit-scrollbar,
+  [data-slot='scroll-area-viewport']::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar,
+  .overflow-auto::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  [data-slot='dialog-content']::-webkit-scrollbar-track,
+  [data-slot='scroll-area-viewport']::-webkit-scrollbar-track,
+  .overflow-y-auto::-webkit-scrollbar-track,
+  .overflow-x-auto::-webkit-scrollbar-track,
+  .overflow-auto::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: var(--radius-sm);
+  }
+
+  [data-slot='dialog-content']::-webkit-scrollbar-thumb,
+  [data-slot='scroll-area-viewport']::-webkit-scrollbar-thumb,
+  .overflow-y-auto::-webkit-scrollbar-thumb,
+  .overflow-x-auto::-webkit-scrollbar-thumb,
+  .overflow-auto::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  [data-slot='dialog-content']::-webkit-scrollbar-thumb:hover,
+  [data-slot='scroll-area-viewport']::-webkit-scrollbar-thumb:hover,
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover,
+  .overflow-auto::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+/* Flyout: slide in from the left (tucked behind anchor); outer shell stays fixed — no width animation. */
+@keyframes dashboard-flyout-in {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes dashboard-flyout-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+}
+.animate-dashboard-flyout-in {
+  animation: dashboard-flyout-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.animate-dashboard-flyout-out {
+  animation: dashboard-flyout-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* ── Scrollbar hide utility (keep scroll functionality) ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Dark mode: sidebar & header surface overrides ── */
+.dark [data-slot='sidebar-inner'] {
+  background-color: #18181b;
+}
+.dark [data-slot='sidebar-inset'] header {
+  background-color: #18181b;
+  border-color: #27272a;
+}
+
+.dark select {
+  background-color: #18181b;
+  color: #d4d4d8;
+}
+.dark select option {
+  background-color: #18181b;
+  color: #d4d4d8;
+}
+
+/* Dashboard grid drag/resize placeholder — riquadro netto (registro IB): fondo neutro
+ * appena percettibile + bordo tratteggiato, micro-raggio come le card.
+ *
+ * ⚠️ Il placeholder di RGL copre l'intera CELLA, ma la card finisce 8px più in alto:
+ * il distacco verticale tra i blocchi vive DENTRO la cella (pb-2 sull'item child,
+ * GRID_ROW_MARGIN). Il riquadro si disegna quindi su un ::after inset di 8px sul
+ * fondo, così i trattini ricalcano esattamente il box della card — mai più fuori. */
+.react-grid-placeholder {
+  background: transparent !important;
+  border: none !important;
+  opacity: 1 !important;
+}
+.react-grid-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 8px 0;
+  background-color: var(--muted);
+  border: 1px dashed var(--foreground);
+  border-radius: 3px;
+  opacity: 0.55;
+}
+
+/* ── Formulas (copied from business-plan-analyzer index.css) ── */
+.dark .bg-navy-50 {
+  background-color: #27272a !important;
+}
+/* Formula chips — navy palette dark overrides */
+.dark .text-navy-800 {
+  color: #e4e4e7 !important;
+}
+.dark .text-navy-900 {
+  color: #fafafa !important;
+}
+.dark .text-navy-700 {
+  color: #d4d4d8 !important;
+}
+.dark .border-navy-200 {
+  border-color: #3f3f46 !important;
+}
+.dark .border-navy-300 {
+  border-color: #52525b !important;
+}
+/* Formulas dropdowns */
+.dark .bg-white\/95 {
+  background-color: rgb(24 24 27 / 0.95) !important;
+}
+.dark .border-gray-100 {
+  border-color: #3f3f46 !important;
+}
+/* Table opts out of broad tr:hover */
+.dark .formulas-table tr:hover td {
+  background-color: transparent !important;
+}
+
+/* ============================================================================
+ * L'EDITOR DEI REPORT (BlockNote): LA VESTE
+ * ============================================================================
+ *
+ * Il foglio della libreria è entrato in testa a questo file dentro
+ * `@layer blocknote`. Quello che segue sta FUORI da ogni layer, ed è l'unica
+ * ragione per cui funziona: una regola senza layer vince su qualunque regola
+ * dentro un layer, a prescindere dalla specificità e dall'ordine con cui i
+ * chunk arrivano al browser. Senza, la riga con cui la libreria dichiara i
+ * colori del suo tema scuro — `.bn-root[data-color-scheme=dark]`, più specifica
+ * della nostra — ci passerebbe sopra.
+ *
+ * Da qui in giù NON si scrive un colore a mano: solo `var(--…)` del prodotto.
+ * Una dichiarazione basta per tutti e due i temi, perché a decidere è `.dark`
+ * sull'html, che i token del prodotto già leggono. Il presidio è
+ * `__tests__/app/(logged-in)/org/[slug]/company/archivio/vestito-editor-nel-css.test.ts`.
+ * ---------------------------------------------------------------------------- */
+
+/* I token della libreria, ridetti nella lingua del prodotto.
+ *
+ * Restano fuori i `--bn-colors-highlights-*` (le tinte di testo e sfondo): lo
+ * schema dell'editor non ha gli stili che li userebbero, quindi non c'è modo di
+ * farli comparire. */
+.bn-root {
+  --bn-colors-editor-text: var(--foreground);
+  --bn-colors-editor-background: var(--background);
+  --bn-colors-menu-text: var(--popover-foreground);
+  --bn-colors-menu-background: var(--popover);
+  --bn-colors-tooltip-text: var(--popover-foreground);
+  --bn-colors-tooltip-background: var(--popover);
+  --bn-colors-hovered-text: var(--accent-foreground);
+  --bn-colors-hovered-background: var(--accent);
+  --bn-colors-selected-text: var(--accent-foreground);
+  --bn-colors-selected-background: var(--accent);
+  --bn-colors-disabled-text: var(--muted-foreground);
+  --bn-colors-disabled-background: var(--muted);
+  --bn-colors-shadow: var(--border);
+  --bn-colors-border: var(--border);
+  --bn-colors-side-menu: var(--muted-foreground);
+  --bn-font-family: var(--font-sans);
+  --bn-border-radius: var(--radius-md);
+}
+
+/* IL COLORE EREDITATO DENTRO UNA FOTOGRAFIA (U84).
+ *
+ * ⚠️ I TOKEN NON BASTANO, ed è misurato: `.cattura-in-chiaro` (v. la tavolozza chiara,
+ * accanto a `:root`) rimette in chiaro tutto ciò che passa da un `var(--…)`, ma il colore
+ * del TESTO della legenda di un grafico non passa di lì — si eredita dal foglio, dove il
+ * `body` l'ha già risolto nel tema di chi guarda. Nella copia da fotografare quel colore
+ * arrivava dal tema SCURO: legenda bianca su fondo bianco nel `.docx` (misurato:
+ * `lab(98.26 0 0)`).
+ *
+ * Riscritto qui, si ricalcola dai token chiari e l'eredità riparte da lì. Sta fuori dal
+ * blocco della tavolozza perché `:root` non deve prenderselo: il colore del prodotto lo
+ * decide il `body`, non l'elemento radice. */
+.cattura-in-chiaro {
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+/* IL CARATTERE DEL REPORT: Times New Roman, e SOLO qui (collaudo del 2026-10-17, che
+ * supera lo Zalando Sans di U133).
+ *
+ * ⚠️ NON È IL CARATTERE DEL PRODOTTO, ed è la riga da leggere due volte: `--font-sans`
+ * non si tocca, e nessun bottone, menu o tabella fuori dal foglio cambia disegno. La
+ * famiglia si usa in UN posto solo, `.bn-default-styles` qui sotto, cioè il foglio
+ * dell'editor, che è la stessa cosa che si consegna in PDF e in Word.
+ *
+ * ⚠️ DUE NOMI, E IL SECONDO È UN FILE NOSTRO. Il primo è Times New Roman, che il foglio
+ * chiede al sistema di chi legge: ce l'hanno Windows e macOS, e il `.docx` scrive lo stesso
+ * nome. Dove non c'è arriva il Tinos qui sotto, che ha gli STESSI AVANZAMENTI glifo per
+ * glifo ed è il carattere che la carta si porta dentro (`stile-del-pdf.ts::
+ * CARATTERE_DELLA_CARTA`): una riga va a capo nello stesso punto con l'uno e con l'altro.
+ * Il presidio `vestito-editor-nel-css.test.ts` confronta questi file con quelli che
+ * react-pdf registra.
+ *
+ * ⚠️ `swap`: il foglio si legge subito col carattere di ripiego e cambia disegno quando i
+ * file sono arrivati. Un foglio bianco per mezzo secondo, su un editor, è peggio di un
+ * cambio di carattere. */
+@font-face {
+  font-family: 'Tinos';
+  src: url('/fonts/tinos-400-normal.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Tinos';
+  src: url('/fonts/tinos-400-italic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Tinos';
+  src: url('/fonts/tinos-700-normal.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Tinos';
+  src: url('/fonts/tinos-700-italic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Il foglio: respiro del prodotto.
+ *
+ * Il rientro laterale sostituisce i 54px della libreria e non si può stringere
+ * troppo: la maniglia del blocco si disegna a sinistra del testo, e senza posto
+ * finirebbe fuori dal foglio. */
+.bn-editor {
+  padding-inline: 3.5rem;
+}
+
+/* IL CORPO DELLA PROSA: 16,5px, cioè 11 punti sulla carta (collaudo del 2026-10-17,
+ * «testo paragrafi da 9 a 11»; erano 13,5px da U83).
+ *
+ * ⚠️ QUESTA È LA CASA, e il PDF ne DISCENDE: `stile-del-pdf.ts::CORPO.testo` è
+ * `daSchermo(16.5)` e nomina questa riga. Le due si cambiano insieme — «quello che
+ * scrivi è quello che consegni» — e cambiarne una sola rimetterebbe la carta a un
+ * corpo che nel foglio non esiste.
+ *
+ * ⚠️ UN VALORE NUDO, NON UN TOKEN (A79). Era `var(--text-sm)` finché il corpo stava
+ * sulla scala tipografica del prodotto; gli 11 punti chiesti sulla carta vogliono 16,5px
+ * qui, che sulla scala non c'è, e aggiungerci un `--text-*` da 16,5 vorrebbe dire
+ * allargare la scala di TUTTO il prodotto per una misura che vale dentro il report e in
+ * nessun altro posto. Il `--text-sm` non si tocca.
+ *
+ * ⚠️ MA IN `rem`, E NON IN PIXEL: 1,03125 × 16 sono i 16,5px, e in più il foglio segue
+ * il carattere che chi legge ha scelto nel browser. È la stessa lingua dei titoli, che
+ * la scala la usano davvero (`--text-2xl` e i suoi fratelli sono in rem): scritto in
+ * pixel, il corpo del report sarebbe stato l'unico pezzo del prodotto sordo a quella
+ * scelta, e un foglio con i titoli che crescono e il testo no.
+ *
+ * Non si trascina dietro niente che sia scritto in pixel: l'interlinea è un
+ * moltiplicatore (`.bn-block-outer { line-height: 1.5 }`), i tre livelli di titolo
+ * hanno la loro misura assoluta (U36), e la colonnina del segno di un elenco è fissa
+ * a 24px nella libreria. Segue invece il rientro della citazione, che la libreria
+ * scrive in `em` (`padding-left: 1em`) — e sulla carta lo segue allo stesso modo.
+ *
+ * ⚠️ CRENATURA E LEGATURE SPENTE, ed è la stessa scelta della carta e del `.docx`: il Tinos
+ * della carta è ritagliato senza (`stile-del-pdf.ts::CARATTERE_DELLA_CARTA`) e Word non le
+ * applica di serie. Accese qui, il foglio andrebbe a capo un poco prima di come la carta
+ * consegna. */
+.bn-default-styles {
+  font-family: 'Times New Roman', 'Tinos', serif;
+  font-size: 1.03125rem;
+  font-kerning: none;
+  font-variant-ligatures: none;
+}
+
+/* L'ARIA ATTORNO A UN BLOCCO DATI, la stessa che ha sulla carta.
+ *
+ * ⚠️ IL NUMERO È NATO SULLA CARTA e l'editor lo segue, al contrario del corpo del
+ * testo qui sopra: `stile-del-pdf.ts::ARIA_DEL_BLOCCO_DATI` è `daSchermo(11)`, cioè
+ * undici pixel DI QUESTO SCHERMO, scelti misurando il bianco che resta su un A4
+ * (15,16 pt fra il testo e la cornice, cioè i quindici di R66 entro un quarto).
+ * Scriverli qui vuol dire che le due rese portano lo stesso numero invece di due
+ * numeri che si somigliano.
+ *
+ * ⚠️ SI RIMISURA A OGNI GIRO DELL'INTERLINEA, DEL CORPO E DEL CARATTERE: erano 14 con la
+ * prosa a 1,305, 16 con l'1,109 di U83, 17 con l'1,2 di U133 in Zalando, 15 con l'1,32 del
+ * ticket 26, e sono 11 col Times a 16,5px e 1,45 del collaudo del 2026-10-17. Il verso è
+ * controintuitivo e va detto: una riga più alta lascia più bianco sotto di sé, quindi
+ * l'aria del blocco ne deve cedere altrettanto — coi 15 il bianco saliva a 17,84 invece
+ * dei 15 chiesti. Chi tocca l'interlinea rimisura questo, e viceversa.
+ *
+ * ⚠️ STA SUL BLOCCO DATI, non sulla coppia: due blocchi dati adiacenti si staccano
+ * quindi del doppio, ed è la stessa regola della carta, dove è stata guardata. Il numero
+ * non si scrive qui: è due volte l'aria, e cambia ogni volta che l'aria si rimisura.
+ *
+ * ⚠️ Il bianco che si vede NON sarà identico al centesimo fra le due rese: di qua
+ * sopra e sotto c'è anche l'interlinea del capoverso, che il CSS e react-pdf
+ * distribuiscono in modo un po' diverso. La misura che conta è questa, ed è una. */
+.bn-editor [data-content-type='grafico'],
+.bn-editor [data-content-type='tabella'],
+.bn-editor [data-content-type='indicatori'] {
+  padding-block: 11px;
+}
+
+/* LE COLONNE AFFIANCATE: la fila è una riga, ogni colonna una parte uguale.
+ *
+ * La libreria le veste già (`.bn-block-column-list { display: flex }`), perché il core
+ * porta il foglio di stile del pacchetto a pagamento anche senza il pacchetto. Quello che
+ * quel foglio dà e qui non si vuole è due cose: un'IMBOTTITURA asimmetrica (25px a
+ * sinistra, 15 a destra), che stringerebbe la prima colonna più della seconda, e un
+ * DIVISORIO grigio fra una colonna e l'altra, in un esadecimale fisso — cioè un colore
+ * fuori dai token e una riga che nessuno ha chiesto.
+ *
+ * ⚠️ LO SPAZIO FRA DUE COLONNE È UN `gap` DI 24px, e non un'imbottitura: 24 è la
+ * colonnina del segno d'elenco, cioè la sola unità di respiro orizzontale del foglio
+ * (`documento-in-pezzi.ts::FRA_DUE_COLONNE`, che è lo stesso numero portato sulla carta e
+ * in Word). Con un `gap` le colonne restano larghe uguali e il bianco sta solo IN MEZZO:
+ * col bordo del foglio non si discute, e la prima riga di ogni colonna comincia dove
+ * comincerebbe un capoverso.
+ *
+ * ⚠️ `min-width: 0` SU OGNI COLONNA: una colonna è un `flex: 1`, e un flex non scende
+ * sotto la larghezza minima del suo contenuto — una tabella larga terrebbe la sua colonna
+ * aperta e stringerebbe la sorella fino a farla sparire. Con lo zero la colonna si
+ * stringe alla sua parte e ciò che non ci sta scorre dentro di lei (`overflow-x` è della
+ * libreria).
+ *
+ * ⚠️ LA MANIGLIA NON SI VESTE QUI: dentro una colonna la sposta la libreria, che cerca il
+ * `data-node-type="column"` e si riaggancia al suo bordo sinistro. */
+.bn-editor .bn-block-column-list {
+  gap: 24px;
+}
+.bn-editor .bn-block-column {
+  padding: 0;
+  min-width: 0;
+  box-shadow: none;
+}
+
+/* IL BLOCCO CHE APRE UNA COLONNA NON PORTA L'ARIA DI SOPRA (richiesta dell'owner,
+ * 2026-09-13: «il commento è leggermente più alto del grafico, invece dovrebbero essere
+ * allineati»).
+ *
+ * ⚠️ MISURATO: nella fila le due colonne cominciano insieme, i loro CONTENUTI no. Un
+ * capoverso apre a 3px dalla cima della colonna — i tre pixel che la libreria dà a ogni
+ * contenuto — e la cornice di un grafico a 18, perché il blocco dati ci mette in mezzo i
+ * suoi quindici (v. `ARIA_DEL_BLOCCO_DATI` qui sopra). Sono i DODICI pixel che l'owner
+ * vede: il commento parte più in alto del disegno che commenta.
+ *
+ * ⚠️ SI TOGLIE L'ARIA AL GRAFICO, NON SE NE DÀ AL COMMENTO, ed è la lettura giusta della
+ * regola: quell'aria esiste per staccare il blocco dati DALLA PROSA che ha sopra e sotto,
+ * e in cima a una colonna sopra non c'è niente — c'è la fila. Il bordo alto della cornice
+ * va quindi dove va la prima riga del commento, e i due contenuti partono insieme.
+ *
+ * ⚠️ SOLO SOPRA E SOLO AL PRIMO: l'aria di sotto resta, perché sotto un blocco dati in
+ * colonna la prosa ci può stare davvero, e un secondo blocco dati più giù nella stessa
+ * colonna la tiene tutta e due.
+ *
+ * ⚠️ IL PREZZO, dichiarato: una fila che comincia con un grafico siede dodici pixel più
+ * vicina al blocco che la precede di quanto farebbe lo stesso grafico a piena larghezza.
+ * È la stessa distanza a cui ci siede già la colonna di prosa accanto — una fila si stacca
+ * da ciò che la precede quanto un capoverso — e portare quell'aria sulla FILA vorrebbe
+ * dire darla anche alle file di sola prosa, che non l'hanno mai avuta.
+ *
+ * ⚠️ `revert-layer` E NON UN 3px SCRITTO A MANO: il valore torna a quello del foglio della
+ * libreria, che sta in `@layer blocknote` — cioè all'imbottitura che ogni contenuto ha di
+ * suo. Riscrivere il numero qui vorrebbe dire una seconda casa per una misura della
+ * libreria, e un aggiornamento che la muove ci passerebbe accanto in silenzio.
+ *
+ * ⚠️ IL GEMELLO È NELLA MANIGLIA: senza aria da recuperare, il primo blocco di una colonna
+ * non vuole nemmeno lo spostamento che la porta sulla cornice
+ * (`blocchi-report.tsx::spostamentoDellaManiglia`). E le altre due rese fanno lo stesso —
+ * `documento-in-pdf.tsx::bloccoInPdf` e `documento-in-docx.ts::nelRespiro`. */
+.bn-editor
+  .bn-block-column
+  > .bn-block-outer:first-child
+  > .bn-block
+  > .bn-react-node-view-renderer
+  > .bn-block-content:is(
+    [data-content-type='grafico'],
+    [data-content-type='tabella'],
+    [data-content-type='indicatori']
+  ) {
+  padding-top: revert-layer;
+}
+
+/* L'ARIA DI UNA FILA CHE SI APRE CON UN BLOCCO DATI: quella che il blocco non prende più,
+ * la prende la fila (2026-09-13, seguito della regola qui sopra).
+ *
+ * ⚠️ MISURATO SULLA CARTA: tolta l'aria al grafico in cima alla colonna, non la rimetteva
+ * più nessuno — una fila che comincia con un grafico aveva 14 px di bianco sopra e 41
+ * sotto, e si leggeva incollata al capoverso che la precede.
+ *
+ * ⚠️ VA ALLA FILA E NON ALLA COLONNA, ed è ciò che tiene in piedi la regola qui sopra: le
+ * colonne partono dalla scatola della fila, quindi un'imbottitura sulla FILA le sposta
+ * tutte insieme e il grafico resta allineato alla prima riga del commento che gli sta
+ * accanto. Rimessa sulla colonna del grafico, i due contenuti ricomincerebbero a partire a
+ * due altezze diverse, che è il guasto da cui questo fix è nato.
+ *
+ * ⚠️ SOLO SE ALMENO UNA COLONNA SI APRE CON UN BLOCCO DATI, ed è ciò che il `:has()` dice:
+ * una fila di sola prosa quell'aria non l'ha mai avuta e non la prende adesso — due
+ * capoversi affiancati si staccano da ciò che li precede come un capoverso solo.
+ *
+ * ⚠️ SOLO SOPRA: sotto la fila l'aria ce l'ha già il blocco dati dentro la colonna, che
+ * quella di sotto non l'ha mai persa.
+ *
+ * ⚠️ I GEMELLI SONO NELLE ALTRE DUE RESE, che la stessa domanda se la fanno sull'indice del
+ * figlio invece che col selettore (`formato-archivio.ts::unaColonnaApreConUnBloccoDati`,
+ * letta da `documento-in-pdf.tsx::bloccoInPdf` e `documento-in-docx.ts::corpoDelBlocco`). */
+.bn-editor
+  .bn-block-column-list:has(
+    > .bn-block-column
+      > .bn-block-outer:first-child
+      > .bn-block
+      > .bn-react-node-view-renderer
+      > .bn-block-content:is(
+        [data-content-type='grafico'],
+        [data-content-type='tabella'],
+        [data-content-type='indicatori']
+      )
+  ) {
+  padding-top: 11px;
+}
+
+/* L'INTERLINEA DELLA PROSA: 1,45, un poco meno dell'1,5 di BlockNote.
+ *
+ * ⚠️ QUESTA È LA CASA e la carta ne discende: `stile-del-pdf.ts::INTERLINEA` porta lo
+ * stesso 1,45, e il presidio confronta le due. Si cambiano insieme.
+ *
+ * ⚠️ 1,45, E ANCHE L'1,32 DEL TICKET 26 È SUPERATO. La storia: U83 aveva stretto la prosa
+ * del 15% (1,305 × 0,85 = 1,109), U133 l'ha riaperta a 1,2, il ticket 26 a 1,32, e il
+ * collaudo del 2026-10-17 ha chiesto «un'interlinea leggermente più ampia, 1,4/1,5» insieme
+ * al Times New Roman e al corpo a 11 punti. 1,45 sta in mezzo, ed è la riga che il `.docx`
+ * aveva già (v. `stile-del-pdf.ts::INTERLINEA`).
+ *
+ * ⚠️ «MA C'È DA ADATTARE TUTTE LE MISURE», e non è un modo di dire: una riga più alta
+ * lascia più bianco attorno a sé, quindi l'aria del blocco dati si è rimisurata (qui
+ * sopra) e i pin che contano le pagine del PDF reso si sono rifissati.
+ *
+ * ⚠️ DOVE C'È `CORPO.testo`, e in nessun altro posto: sulla carta l'interlinea è
+ * scritta lì. I titoli hanno la loro, e i blocchi dati sono vestiti con le classi
+ * Tailwind. Scriverla su `.bn-block-outer` come fa la libreria la darebbe a tutti.
+ *
+ * ⚠️ LA TABELLA SCRITTA A MANO CI STA DENTRO (U88): le sue celle portano `CORPO.testo` e
+ * l'interlinea della prosa già sulla carta (`documento-in-pdf.tsx`) e nel `.docx`
+ * (`documento-in-docx.ts`), mentre qui si riprendevano l'1,5 di BlockNote — tre rese e
+ * due misure. Il blocco dati è un'altra cosa e non si tocca: quello ha
+ * `INTERLINEA_DEL_BLOCCO_DATI`. */
+.bn-editor
+  :is(
+    [data-content-type='paragraph'],
+    [data-content-type='bulletListItem'],
+    [data-content-type='numberedListItem'],
+    [data-content-type='quote'],
+    [data-content-type='table']
+  ) {
+  line-height: 1.45;
+}
+
+/* LA PROSA È GIUSTIFICATA (U147, che SUPERA U133, che aveva superato U75).
+ *
+ * ⚠️ QUESTA RIGA È ANDATA E TORNATA, e il giro va letto prima di rifarlo. U75 la mise;
+ * U133 la TOLSE, perché il bordo destro dritto costa spazi larghi in modo diverso da
+ * riga a riga e senza sillabazione (U76) è la combinazione che apre i buchi peggiori;
+ * U147 la rimette, perché l'owner ha guardato le due rese affiancate e ha scelto il
+ * bordo dritto anche a quel prezzo. ⚠️ LA SILLABAZIONE È ANCORA SPENTA (U76), e adesso
+ * non c'è più nessun ticket che la aspetti: il 28 nasceva per accenderla e l'owner l'ha
+ * chiuso sul solo giustificato. Quindi il prezzo è aperto e dichiarato — senza sillabe da
+ * spezzare gli spazi si allargano di più, ed è la combinazione che apre i buchi peggiori.
+ * L'istruttoria di come si accenderebbe (due motori, browser contro react-pdf, e le
+ * eccezioni sulle sigle) resta scritta nel ticket 28, che è resolved e va letto per
+ * quello.
+ *
+ * ⚠️ IL GEMELLO È SULLA CARTA: `documento-in-pdf.tsx::corpoDelBlocco` ripiega su
+ * `justify` per gli stessi quattro tipi. Le due si cambiano insieme, e due presidi le
+ * confrontano (`vestito-editor-nel-css.test.ts`, `documento-in-pdf-reso.test.tsx`).
+ *
+ * ⚠️ I TITOLI RESTANO A SINISTRA (giustificare un titolo che va a capo stira la prima
+ * riga e non guadagna niente) E LE CELLE DI UNA TABELLA ANCHE: una colonna di un
+ * centinaio di pixel giustificata spara le parole ai due lati della cella. Sono i due
+ * tipi che l'elenco qui sotto non nomina.
+ *
+ * ⚠️ UN `center` O UN `right` SCRITTI NEL DOCUMENTO VALGONO ANCORA: quelli l'attributo
+ * `data-text-alignment` ce l'hanno, e la libreria li dichiara `!important`. È il `left`
+ * di serie di BlockNote a non essere una scelta di chi scrive — la barra di formattazione
+ * del report esclude apposta l'allineamento (`blocchi-report.tsx::BarraDiFormattazione`)
+ * — ed è per quello che il ripiego lo decide il prodotto.
+ *
+ * ⚠️ E IL `.docx` È TORNATO IN PARI SENZA CHE NESSUNO LO TOCCASSE: `documento-in-docx.ts`
+ * ha continuato a chiedere `justify` per tutto il giro — U133 l'aveva lasciato indietro
+ * apposta, perché il ticket 26 rivestiva la carta e il foglio — e adesso le tre rese
+ * dicono di nuovo la stessa cosa. Chi rimette mano all'allineamento le muove tutte e tre.
+ * ⚠️ NON SERVE `!important`: per il `left` di serie la libreria non scrive nessun
+ * attributo, quindi questa regola non incontra niente da battere. */
+
+.bn-editor
+  .bn-block-content:is(
+    [data-content-type='paragraph'],
+    [data-content-type='bulletListItem'],
+    [data-content-type='numberedListItem'],
+    [data-content-type='quote']
+  ) {
+  text-align: justify;
+}
+
+/* LE ZONE RISERVATE ALL'ASSISTENTE: si vedono senza gridare.
+ *
+ * Il protagonista resta il testo del documento. Una zona è un'informazione SUL testo —
+ * «questa parte la scrive l'assistente» — e deve leggersi come tale: nessun colore che
+ * non sia già del tema, nessun pittogramma.
+ *
+ * ⚠️ IL FONDO NON PUÒ ESSERE `--muted`, ed è il difetto che l'owner ha visto sul foglio
+ * vero (2026-09-21): in tema chiaro quel token vale `oklch(0.97 0 0)`, cioè un bianco
+ * sporco, e la zona blocco lo portava per giunta al 60% — un riquadro a un paio di punti
+ * di luminosità dalla pagina, che non si distingueva dalla prosa attorno. Il fondo è
+ * adesso una velatura del TESTO (`--foreground` al 6% su trasparente): si compone su ciò
+ * che c'è dietro e si rovescia da sé nei due temi — in chiaro scurisce, in scuro schiarisce
+ * — invece di dipendere da un token tarato per le superfici.
+ *
+ * ⚠️ LE DUE SPECIE PORTANO LO STESSO VESTITO, a due misure (owner: «l'estetica deve essere
+ * condivisa fra i blocchi in prosa e i blocchi fra i paragrafi»): stessa velatura, stesso
+ * filo di bordo, angoli della stessa famiglia. Una zona dentro una frase è la versione
+ * piccola dello stesso oggetto, e chi ne riconosce una riconosce l'altra.
+ *
+ * ⚠️ LA ZONA NEL TESTO RESTA LEGGERA: due pixel d'aria ai lati staccano le sue parole da
+ * quelle fisse — è anche quello che rende visibile da che parte del confine sta il cursore
+ * — e il bordo è un filo, non una cornice: dentro una riga giustificata un riquadro pieno
+ * spezzerebbe il ritmo della prosa.
+ *
+ * ⚠️ E QUANDO È VUOTA PORTA IL SUO NOME, in corsivo smorzato, al posto del testo che non
+ * c'è ancora: è la stessa dottrina del `NUMERO_PERDUTO` e della zona vuota sulla carta —
+ * si vede, e si capisce che cosa manca. Il nome viene dall'attributo che la resa scrive
+ * sul contenuto (`zone-riservate.tsx`), perché il `data-nome` dell'involucro BlockNote lo
+ * scrive solo quando è diverso dal suo valore di serie.
+ *
+ * ⚠️ LE CONDIZIONI SONO DUE, ed è misurato: dentro l'editor la node view React non lascia
+ * il testo nudo dentro l'elemento scrivibile — ci mette il suo contenitore del contenuto
+ * (`data-node-view-content-react`), quindi quell'elemento un figlio ce l'ha sempre e il
+ * solo `:empty` non scatterebbe MAI. Fuori dall'editor (gli appunti, l'HTML
+ * d'esportazione) quel contenitore non c'è e il testo sta dentro direttamente. Il
+ * segnaposto deve comparire in tutti e due i casi, e a distinguerli non c'è nessuna
+ * classe: `:empty` per il nudo, `:has(> :only-child:empty)` per la node view. Presidiato
+ * di là dal foglio (`zone-riservate.test.tsx`), dove si guarda la forma vera del DOM. */
+/* ⚠️ LA VELATURA HA UNA CASA SOLA, ed è questa: la portano le due specie di zona e lo stato
+ * di quella scelta, e tre `color-mix` scritti a mano divergerebbero al primo ritocco — il
+ * fondo di una zona nel testo e quello del riquadro devono essere lo STESSO colore, o le
+ * due specie smettono di leggersi come la stessa cosa. Sta sul foglio e non nei temi perché
+ * non è un token del prodotto: è una funzione del testo, e non ha una variante per tema. */
+.bn-editor {
+  --velatura-della-zona: color-mix(in oklab, var(--foreground) 3.5%, transparent);
+  /* Lo stesso colore un gradino più su, per la zona scelta: un solo segno, e dello stesso
+   * registro del riposo (v. la regola della selezione, più in basso). */
+  --velatura-della-zona-scelta: color-mix(in oklab, var(--foreground) 7%, transparent);
+}
+.bn-editor [data-inline-content-type='zonaNelTesto'] {
+  background-color: var(--velatura-della-zona);
+  border: 1px solid var(--border);
+  /* ⚠️ UN GRADINO SOTTO IL RIQUADRO, e la distanza fra i due è quella di sempre: la zona
+   * nel testo è la versione piccola dello stesso vestito, e un angolo più tondo su una
+   * scatola più bassa la farebbe leggere come una pillola invece che come un riquadro.
+   * La scala è quella del tema (`--radius-md` è `--radius` meno 2, `--radius-sm` meno 4):
+   * qui si va avanti di un altro gradino invece di scrivere un numero. */
+  border-radius: calc(var(--radius-sm) - 2px);
+  padding-inline: 2px;
+}
+.bn-editor
+  [data-inline-content-type='zonaNelTesto']
+  [data-editable]:is(:empty, :has(> :only-child:empty))::before {
+  /* ⚠️ LE PARENTESI E IL MINUSCOLO SONO VESTITO, E STANNO QUI APPOSTA: nel documento il
+   * nome resta com'è stato scritto — è quello che l'assistente legge per sapere che cosa
+   * scrivere, e che le due rese stampano — mentre a schermo una zona vuota in mezzo alla
+   * prosa si legge meglio come un tag, `[ricavi 2025]`, che come un pezzo di frase con la
+   * maiuscola. Scritte nel nome sarebbero finite nel documento e sul PDF. */
+  content: '[' attr(data-nome) ']';
+  color: var(--muted-foreground);
+  font-style: italic;
+  text-transform: lowercase;
+}
+
+/* LA ZONA BLOCCO È UN RIQUADRO, dentro cui si lavora: l'etichetta in alto e il corpo sotto.
+ *
+ * ⚠️ IL RIQUADRO STA SUL BLOCCO E NON SUL CONTENUTO, ed è l'unica catena possibile: il
+ * gruppo dei figli è FRATELLO del contenuto, non suo figlio, e il riquadro li deve tenere
+ * tutti e due — l'etichetta E il corpo. È la stessa catena della regola del blocco dati in
+ * cima a una colonna, qui sopra.
+ *
+ * ⚠️ IL BORDO C'È, E PRIMA NON C'ERA. Fino al 2026-09-21 qui stava scritto «un fondo solo,
+ * senza bordo, ed è la scelta che tiene il riquadro calmo»: la ragione era che una cornice
+ * attorno a ogni parte compilata riempirebbe la pagina di rettangoli. Ma il fondo da solo
+ * era `--muted` a tre quinti, cioè un paio di punti di luminosità sopra la pagina bianca, e
+ * sul foglio vero il riquadro non si vedeva affatto — l'owner l'ha detto guardando un
+ * documento a zone: «non c'è modo di capire che quello sia un blocco zona». Un filo di
+ * `--border`, che è il token con cui il prodotto separa ogni superficie, più la velatura un
+ * po' più carica: il riquadro adesso si legge come un riquadro, e resta più chiaro della
+ * prosa nera che ci sta dentro.
+ *
+ * ⚠️ LA LARGHEZZA NON DIPENDE DAL CONTENUTO: il riquadro è il blocco, che è largo quanto la
+ * colonna del testo da vuoto e da pieno. La pagina non balla quando l'assistente scrive —
+ * il riquadro cresce in altezza e basta.
+ *
+ * ⚠️ E SULLA CARTA NON C'È NIENTE DI TUTTO QUESTO: il riquadro è vestito dello schermo, e
+ * il documento non se ne porta dietro un pixel (l'etichetta nemmeno, che non è contenuto).
+ * Il PDF e il `.docx` una zona non la disegnano affatto. */
+.bn-editor
+  .bn-block:has(> .bn-react-node-view-renderer > .bn-block-content[data-content-type='zona']) {
+  background-color: var(--velatura-della-zona);
+  border: 1px solid var(--border);
+  /* ⚠️ PIÙ SPIGOLOSO DI UN GRADINO (owner, 2026-09-21: «lo vorrei meno stondato e più
+   * spigoloso, non troppo ma un po' di più sì»): era `--radius-md`. Si scende di un
+   * gradino sulla scala del tema invece di scrivere un numero, così il riquadro resta
+   * parente delle altre superfici del prodotto. */
+  border-radius: var(--radius-sm);
+  /* ⚠️ IL RIQUADRO STA ADDOSSO AL TESTO (owner, 2026-09-21: «stringi un po' i bordi,
+   * avvicinali al testo del 70%», poi «altro 5%»): i distacchi misurati sul foglio vero
+   * erano 16px ai lati, 13 sopra e 15 sotto, e qui ne resta il 25%, cioè 4 ai lati, 3 sopra
+   * e 4 sotto.
+   *
+   * ⚠️ SOPRA E SOTTO IL NUMERO SCRITTO NON È IL DISTACCO: la libreria dà `padding: 3px 0` a
+   * ogni `.bn-block-content` e quei tre pixel si sommano, mentre ai lati ne dà zero. Lo zero
+   * qui sopra vale tre pixel di stacco, l'uno qui sotto ne vale quattro. Chi li ritocca
+   * misuri il risultato nel browser invece di leggere questa riga. */
+  padding: 0 4px 1px;
+  /* ⚠️ E UN RESPIRO SOPRA E SOTTO: senza, il riquadro tocca il capoverso che lo precede —
+   * e due zone di fila si toccano fra loro, che è una banda sola invece di due parti. */
+  margin-block: 8px;
+  /* ⚠️ IL RIQUADRO SBORDA, ED È VOLUTO: sta diciassette pixel più in fuori della prosa da
+   * ogni lato, così che la fascia d'imbottitura e il bordo cadano nel margine dell'editor e
+   * il TESTO DENTRO LA ZONA torni in colonna con la prosa attorno. È la larghezza piena
+   * della colonna per chi legge il documento, che è ciò che conta: le righe dentro il
+   * riquadro e quelle fuori cominciano e finiscono alla stessa x.
+   *
+   * ⚠️ L'AGGETTO VALE IMBOTTITURA PIÙ BORDO (4 + 1), ed è una somma da rifare a ogni
+   * ritocco dell'una o dell'altro, o il corpo della zona esce storto di un pixel. Ha già
+   * cambiato numero due volte in un giorno: sedici quando il riquadro non aveva cornice,
+   * diciassette quando l'ha presa, cinque da quando l'imbottitura si è stretta.
+   *
+   * ⚠️ PROVATO A STRINGERLO, E RIMESSO COM'ERA: il 2026-09-21 l'owner ha chiesto un
+   * riquadro a filo del testo («il box è troppo largo, teniamolo stretto a filo-testo»), e
+   * con `margin-inline: 0` il bordo andava a filo della colonna e il corpo rientrava della
+   * sua imbottitura. Rivisto sul foglio vero lo stesso giorno: «come è ora è più bello
+   * esteticamente ma credo che avere la larghezza completa del testo sia meglio». Vince la
+   * colonna piena: il riquadro più stretto è più elegante da fermo, ma sposta ogni riga
+   * della zona rispetto al resto del documento, e un documento si legge tutto insieme.
+   *
+   * ⚠️ E QUI C'È UN GUASTO MISURATO SULLA MANIGLIA, che l'aggetto TIENE LONTANO: il menu
+   * laterale sceglie il blocco da `elementsFromPoint`
+   * (`SideMenu.ts::updateStateFromMousePos`) a una x serrata verso il bordo sinistro, e con
+   * l'imbottitura DENTRO la colonna quella sonda cadeva sul RIQUADRO invece che sul figlio
+   * — avvicinandosi alla maniglia del capoverso, la maniglia diventava quella della zona.
+   * Con l'aggetto la sonda resta fuori: misurato il 2026-09-21 su un foglio a 1440, la
+   * sonda cade a 341 e il riquadro comincia a 382. Chi stringe la colonna o porta
+   * l'imbottitura dentro rimisuri: il segno che il guasto è tornato è un figlio della zona
+   * che non si trascina più. */
+  margin-inline: -5px;
+}
+/* ⚠️ IL RIENTRO DEI FIGLI TORNA A ZERO, ed è la riga da non perdere: la libreria rientra di
+ * 24px OGNI gruppo di figli (`.bn-block-group .bn-block-group`, il rientro degli elenchi),
+ * e qui direbbe una cosa falsa — il contenuto di una zona non è annidato sotto un elenco,
+ * è il corpo del documento. A dire il confine adesso c'è il riquadro. */
+.bn-editor
+  .bn-block:has(> .bn-react-node-view-renderer > .bn-block-content[data-content-type='zona'])
+  > .bn-block-group {
+  margin-left: 0;
+}
+/* ⚠️ E NEMMENO IL FILO DELL'ANNIDAMENTO, che è l'ALTRA metà di quel rientro e viveva
+ * ancora: `@blocknote/shadcn` disegna su ogni figlio di un gruppo annidato un
+ * `::before` alto quanto il blocco con `border-left: 1px solid var(--bn-colors-side-menu)`
+ * a `left: -20px` (la guida degli elenchi). Tolto il rientro, quel filo è finito DENTRO il
+ * riquadro, a un pelo dal testo — misurato sul foglio vero, ed è la riga sottile che si
+ * vedeva accanto al segnaposto e alla maniglia. Solo sui figli DIRETTI: un elenco scritto
+ * dentro la zona la sua guida se la tiene, che lì dice una cosa vera. */
+.bn-editor
+  .bn-block:has(> .bn-react-node-view-renderer > .bn-block-content[data-content-type='zona'])
+  > .bn-block-group
+  > .bn-block-outer::before {
+  border-left: none;
+}
+/* ⚠️ IL CONTENUTO DELLA ZONA NON È UNA RIGA IN FILA: la libreria dà `display: flex` a ogni
+ * `.bn-block-content` — le serve per la colonnina del segno d'elenco e per l'allineamento —
+ * e lì dentro l'etichetta e l'invito, che sono uno `<span>` e un `<button>`, finivano
+ * appaiati sulla stessa riga («Commento · da compilareScrivi qui…») dentro una scatola
+ * larga quanto il più lungo dei due. Da qui in giù la testa della zona è un blocco: le due
+ * righe si impilano, e sono larghe quanto il riquadro. */
+.bn-editor .bn-block-content[data-content-type='zona'] {
+  display: block;
+}
+/* ⚠️ L'ETICHETTA È UNA DIDASCALIA, non un'intestazione: corpo piccolo e colore smorzato,
+ * perché il testo che conta è quello dentro la zona. Dice il nome e, finché la zona è
+ * vuota, che c'è da compilarla.
+ *
+ * ⚠️ E STA DENTRO IL RIQUADRO, in alto (owner, 2026-09-21: «il nome del blocco deve essere
+ * all'interno del box»): è il solo posto in cui il nome di una zona si legge senza aprire
+ * niente, e fuori dal riquadro sarebbe la didascalia di qualcos'altro. Il peso medio è
+ * quello che la fa leggere come l'etichetta DEL riquadro invece che come la prima riga del
+ * suo contenuto, adesso che un bordo il riquadro ce l'ha; il colore resta smorzato, o
+ * l'etichetta peserebbe più della prosa che introduce. */
+.bn-editor [data-content-type='zona'] [data-etichetta-zona] {
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  display: block;
+}
+/* ⚠️ E IL SUO CAPOVERSO VUOTO PORTA IL SEGNAPOSTO «Scrivi qui…», che è quello su cui si
+ * scrive sopra: era un bottone su una riga a sé, sopra il contenuto, ed è diventato il
+ * testo grigio del capoverso — quello che sparisce alla prima battuta, come «Inserisci
+ * testo o digita '/' per i comandi» in ogni altro blocco del foglio.
+ *
+ * ⚠️ LA REGOLA È NOSTRA PERCHÉ IL TIPO NON BASTA: i segnaposti della libreria si
+ * dichiarano per TIPO di blocco (il core inietta `.bn-block-content[data-content-type=…]
+ * :has(.ProseMirror-trailingBreak:only-child)::after { content: … }`, uno per voce di
+ * `placeholders`), e un capoverso dentro una zona resta un capoverso. La forma del
+ * selettore è la stessa, la condizione in più è la zona.
+ *
+ * ⚠️ DUE REGOLE, UNA PER PAGINA: dentro la zona si scrive sul report come sul modello, ma
+ * non la stessa cosa. Sul REPORT il pezzo vero, o lo lascia all'assistente; sul MODELLO
+ * l'esempio che l'assistente leggerà. A dire quale pagina è la testa della zona
+ * (`zone-riservate.tsx::TestaDellaZona`, `data-pagina-della-zona`).
+ *
+ * ⚠️ I TESTI SONO GEMELLI, e la loro casa è `formato-archivio.ts::SCRIVI_QUI_NELLA_ZONA` e
+ * `SCRIVI_QUI_NEL_MODELLO`: un foglio di stile non si importa, quindi le parole stanno
+ * scritte due volte e `vestito-editor-nel-css.test.ts` è ciò che tiene insieme le due case.
+ *
+ * ⚠️ SOLO IL FIGLIO UNICO, che è la forma del vuoto: una zona con più capoversi ha già del
+ * contenuto, e un segnaposto su ognuno di quelli vuoti sarebbe un coro.
+ *
+ * ⚠️ E SOLO UN CAPOVERSO, FIGLIO DIRETTO: la condizione del vuoto (`:has(trailingBreak)`)
+ * guarda in TUTTI i discendenti, e una tabella con una cella vuota ne ha uno. Col solo
+ * figlio unico, una zona che conteneva soltanto una tabella accendeva il segnaposto sul
+ * blocco della TABELLA: il `::after` diventava un fratello della tabella nel `flex` del
+ * `.bn-block-content`, stava in alto a destra sopra l'ultima colonna e le rubava la
+ * larghezza, cioè tabella tagliata (owner, 2026-09-24, «Piano di riparto»). La libreria
+ * scrive i suoi segnaposti per tipo di blocco proprio per questo; qui si fa lo stesso. */
+.bn-editor
+  .bn-block:has(
+    > .bn-react-node-view-renderer
+      > .bn-block-content[data-content-type='zona']
+      > [data-pagina-della-zona='report']
+  )
+  > .bn-block-group
+  > .bn-block-outer:only-child
+  > .bn-block
+  > .bn-block-content[data-content-type='paragraph']:has(
+    .ProseMirror-trailingBreak:only-child
+  )::after {
+  content: 'Scrivi qui, o lascia che la compili l’assistente';
+}
+.bn-editor
+  .bn-block:has(
+    > .bn-react-node-view-renderer
+      > .bn-block-content[data-content-type='zona']
+      > [data-pagina-della-zona='modello']
+  )
+  > .bn-block-group
+  > .bn-block-outer:only-child
+  > .bn-block
+  > .bn-block-content[data-content-type='paragraph']:has(
+    .ProseMirror-trailingBreak:only-child
+  )::after {
+  content: 'Scrivi qui un esempio per l’assistente';
+}
+
+/* LA FIRMA (`firma.tsx`): a destra, larga quanto una firma e non quanto il foglio, con il
+ * bianco per la penna, la riga e sotto chi firma, centrato e un gradino più piccolo. Le due
+ * rese la disegnano con le stesse proporzioni (`documento-in-pdf.tsx`, `documento-in-docx.ts`).
+ *
+ * ⚠️ IL SEGNAPOSTO È NOSTRO e sta sotto la riga: quello della libreria è un `::after` del
+ * blocco intero, e sarebbe finito di fianco al bianco. Lo si spegne con una regola più
+ * specifica della sua (`.bn-block-content[data-is-empty-and-focused]:has(…)::after`), e il
+ * testo è gemello di `formato-archivio.ts::CHI_FIRMA` (`vestito-editor-nel-css.test.ts`). */
+.bn-editor [data-content-type='firma'] [data-firma] {
+  display: flex;
+  flex-direction: column;
+  width: min(16rem, 50%);
+  margin-inline-start: auto;
+}
+.bn-editor [data-content-type='firma'] [data-spazio-della-firma] {
+  height: 2.75rem;
+  border-bottom: 1px solid var(--foreground);
+}
+.bn-editor [data-content-type='firma'] [data-chi-firma] {
+  position: relative;
+  padding-top: 0.25rem;
+  font-size: 0.875em;
+  text-align: center;
+}
+.bn-editor
+  [data-content-type='firma']
+  [data-chi-firma]:has(.ProseMirror-trailingBreak:only-child)::after {
+  content: 'Nome e ruolo di chi firma';
+  position: absolute;
+  inset-inline: 0;
+  top: 0.25rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.bn-editor
+  .bn-block-content[data-content-type='firma'][data-content-type]:has(
+    .ProseMirror-trailingBreak:only-child
+  )::after {
+  content: none;
+}
+
+/* LA FIRMA DENTRO UNA FRASE: la sola riga, poggiata sulla linea di base del testo. */
+.bn-editor [data-inline-content-type='firmaNelTesto'] [data-firma-nel-testo] {
+  display: inline-block;
+  width: 9em;
+  height: 1em;
+  margin-inline: 0.15em;
+  border-bottom: 1px solid currentColor;
+}
+
+/* I tre livelli di titolo, sulla scala tipografica del prodotto invece che sugli
+ * `em` della libreria (3em, 2em, 1.3em: un titolo alto il triplo del testo).
+ * Il livello 1 non porta `data-level` — BlockNote non scrive gli attributi che
+ * valgono il default — quindi la regola vale sia sul blocco nudo sia
+ * sull'attributo esplicito, se un giorno arrivasse.
+ * `--prev-level` è la misura di partenza dell'animazione quando si cambia
+ * livello: senza, il titolo partirebbe dai 3em della libreria per arrivare ai
+ * nostri. I livelli dal 4 in giù non esistono nello schema. */
+.bn-editor [data-content-type='heading'],
+.bn-editor [data-content-type='heading'][data-level='1'],
+.bn-editor [data-prev-level='1'] {
+  line-height: 1.2;
+  --level: var(--text-2xl);
+  --prev-level: var(--text-2xl);
+  --tinta-del-titolo: var(--report-titolo);
+  --filo-del-titolo: var(--report-titolo);
+}
+.bn-editor [data-content-type='heading'][data-level='2'],
+.bn-editor [data-prev-level='2'] {
+  line-height: 1.3;
+  --level: var(--text-xl);
+  --prev-level: var(--text-xl);
+  --tinta-del-titolo: var(--report-sottotitolo);
+  --filo-del-titolo: transparent;
+}
+.bn-editor [data-content-type='heading'][data-level='3'],
+.bn-editor [data-prev-level='3'] {
+  line-height: 1.4;
+  --level: var(--text-lg);
+  --prev-level: var(--text-lg);
+  --tinta-del-titolo: var(--report-terzo-titolo);
+  --filo-del-titolo: transparent;
+}
+
+/* IL COLORE COME STRUTTURA (U133): navy la sezione, blu di mezzo il secondo livello, blu
+ * chiaro il terzo — e un filo, sotto la sola sezione, che chiude la testata.
+ *
+ * ⚠️ IL TERZO NON E' PIU' `--foreground`: in nero era il piu' contrastato dei tre (19,80
+ * contro i 15,81 del navy), cioe' il gradino piu' piccolo gridava piu' del piu' grande. La
+ * tinta e il perche' stanno accanto ai token (`--report-terzo-titolo`).
+ *
+ * ⚠️ DUE VARIABILI E NON SEI REGOLE, per la stessa ragione di `--level` qui sopra: la
+ * tinta e il filo si scelgono dove si sceglie il corpo, e si USANO in un posto solo. Tre
+ * blocchi di dichiarazioni scollegati si sarebbero scollati al primo livello aggiunto.
+ *
+ * ⚠️ IL FILO STA SUL CONTENUTO, L'ARIA SUL BLOCCO, e non si possono scambiare: il bordo di
+ * un elemento cade SOTTO la sua imbottitura, quindi un filo scritto sullo stesso elemento
+ * dell'aria (`padding-bottom` qui sotto) scivolerebbe accanto al primo capoverso e si
+ * leggerebbe come la sua sottolineatura — che e' esattamente il difetto per cui quell'aria
+ * e' nata. Sul `.bn-inline-content` invece il filo chiude le parole del titolo, e l'aria
+ * resta fra il filo e cio' che segue.
+ *
+ * ⚠️ IL GEMELLO STA SULLA CARTA: `documento-in-pezzi.ts::COLORE_DEL_TITOLO` e
+ * `FILO_SOTTO_IL_TITOLO`, e la carta divide le due cose allo stesso modo — l'imbottitura
+ * sull'involucro, il bordo sulla riga (`documento-in-pdf.tsx::corpoDelBlocco`).
+ *
+ * ⚠️ `transparent` NON E' UN COLORE SCRITTO A MANO: e' l'assenza di filo per i due livelli
+ * che non ne hanno, scritta in modo che la variabile resti una sola. */
+.bn-editor [data-content-type='heading'] .bn-inline-content {
+  color: var(--tinta-del-titolo);
+  border-bottom: 1px solid var(--filo-del-titolo);
+}
+
+/* L'ARIA SOTTO UN TITOLO, mezzo corpo del titolo stesso (U133).
+ *
+ * ⚠️ IL TITOLO AVEVA RESPIRO SOLO SOPRA (i 18px della libreria), e sotto niente: la prima
+ * riga del capoverso si attaccava alla testata, e il titolo sembrava l'attacco di quel
+ * capoverso invece della sua intestazione. Col filo che il ticket 26 mette sotto il
+ * titolo di sezione, senza aria quel filo si leggerebbe come una sottolineatura del primo
+ * capoverso.
+ *
+ * ⚠️ PROPORZIONATA AL LIVELLO, e per questo è un `calc` e non tre numeri: `--level` è già
+ * il corpo del titolo (24, 20, 18px sulla scala del prodotto), quindi la stessa riga dà
+ * 12px al primo livello, 10 al secondo e 9 al terzo. Un titolo più grande apre una
+ * sezione più grande, e vuole più bianco sotto — tre costanti scritte a mano si
+ * sarebbero scollate dai corpi al primo ritocco della scala.
+ *
+ * ⚠️ IL GEMELLO STA SULLA CARTA: `documento-in-pezzi.ts::ariaSottoIlTitolo` è la stessa
+ * metà del corpo, e il presidio confronta le due. */
+.bn-editor [data-content-type='heading'] {
+  padding-bottom: calc(var(--level) / 2);
+}
+
+/* La citazione: la libreria la scrive in un grigio-viola fisso, filetto
+ * compreso. */
+.bn-editor [data-content-type='quote'] blockquote {
+  color: var(--muted-foreground);
+  border-left-color: var(--border);
+}
+
+/* La tabella: bordi delle celle, cella selezionata, maniglia della larghezza
+ * della colonna e cursore di caduta. La libreria li fa rispettivamente grigio
+ * chiaro, lavanda e azzurro, sempre gli stessi in chiaro e in scuro. */
+.bn-editor [data-content-type='table'] th,
+.bn-editor [data-content-type='table'] td {
+  border-color: var(--border);
+}
+
+/* LA TABELLA DI TESTO È LARGA QUANTO IL FOGLIO (U128).
+ *
+ * La libreria la fa larga quanto le sue colonne (`width: auto !important` su
+ * `[data-content-type=table] table`), e una tabella di due colonne restava un
+ * francobollo appoggiato a sinistra dentro i 718 px della cornice — mentre la
+ * tabella di un BLOCCO DATI, che le sta accanto nella stessa pagina, il foglio se
+ * lo prende tutto. Due tabelle nello stesso report non si devono distinguere per
+ * quanto sono larghe.
+ *
+ * `100%` con `table-layout: auto` e non `fixed`: «auto» tiene per buone le
+ * larghezze scritte — quelle che chi scrive ha trascinato con la maniglia — come
+ * larghezze di PARTENZA, e l'avanzo lo distribuisce fra le colonne secondo il
+ * contenuto; «fixed» le avrebbe spartite in parti uguali, che è proprio il guasto
+ * che la regola qui sotto della tabella dati esiste per disfare.
+ *
+ * L'`!important` è l'unico modo di battere quello della libreria: stessa
+ * specificità, e senza vincerebbe lei. */
+.bn-editor [data-content-type='table'] table {
+  table-layout: auto;
+  width: 100% !important;
+}
+.bn-editor .selectedCell::after {
+  /* Un velo, non un fondo: il velo si disegna SOPRA il testo della cella (è un
+     `::after` disteso su tutta la cella), quindi un colore pieno lo
+     nasconderebbe. Il quarto di `--ring` è il colore con cui il prodotto segna
+     ciò che è scelto, alla stessa trasparenza del lavanda della libreria. */
+  background-color: color-mix(in oklab, var(--ring) 25%, transparent);
+}
+.bn-editor .column-resize-handle,
+.bn-root .bn-table-drop-cursor {
+  background-color: var(--ring);
+}
+
+/* LA TABELLA DI UN BLOCCO DATI STA DENTRO LA SUA CORNICE, E NON SCORRE (U55).
+ * In un report — e nel PDF che ne esce — una tabella che scorre non esiste: su una
+ * pagina stampata non c'è nessun gesto per scorrerla, e le colonne oltre il bordo
+ * semplicemente non ci sono. Supera A61, che lo scorrimento l'aveva scelto per il
+ * caso opposto (diciassette colonne in settecento pixel).
+ *
+ * La libreria da sola non ci arriva: su OGNI tabella dentro l'editor mette
+ * `table-layout: fixed` con `width: 100%`, e «fixed» spartisce la cornice in parti
+ * UGUALI — la colonna delle voci larga come quella di un numero, e la voce finisce
+ * stampata sopra il numero (misurato al banco). Qui si cambia il solo modo di
+ * spartire: `auto` dà a ogni colonna la larghezza che le serve, il `width: 100%`
+ * tiene la tabella dentro la cornice, e ciò che avanza si distribuisce fra le
+ * colonne — la tabella si stringe fino a starci invece di sfondare.
+ *
+ * ⚠️ CHE CI SI STIA LO GARANTISCE IL TETTO DEL PANNELLO (A62), non questo foglio:
+ * 718 px di cornice, 69 per una colonna di numeri e 72 per la colonna delle voci
+ * fanno NOVE colonne rese (`pannello-blocco-dati.tsx::MASSIMO_DI_COLONNE_RESE`,
+ * dove sta anche il perché le due misure delle colonne sono scese). Il CSS
+ * stringe, il pannello impedisce di chiedere l'impossibile.
+ *
+ * La colonna dei VALORI tiene la sua larghezza di partenza — 64 px, quella del
+ * blocco tabella della dashboard, perché affiancate le due tabelle non si devono
+ * distinguere (U24) — e con numeri più lunghi cresce, che è ciò che `auto` fa. La
+ * colonna delle VOCI non ha più niente: il suo pavimento di 172 px era il resto di
+ * quando si scorreva, e a tabella ferma era anche lo spazio vuoto fra le voci e le
+ * prime colonne (R25). Adesso parte dal suo contenuto e prende ciò che avanza. */
+.bn-editor [data-content-type='tabella'] table {
+  table-layout: auto;
+  width: 100%;
+}
+.bn-editor [data-content-type='tabella'] [data-colonna='valore'] {
+  /* `width` e non `min-width`: su una cella di tabella il `min-width` il browser lo
+     ignora (misurato: resta a zero anche vincendo la cascata), mentre la larghezza
+     entra nel calcolo delle colonne — ed è il motivo per cui la griglia usa `width`
+     anche lei. Con `table-layout: auto` è una larghezza di partenza, non un tetto:
+     un numero più lungo allarga la sua colonna, e il resto si stringe. */
+  width: 64px;
+}
+/* Gli anni siedono in BASSO nella loro casella.
+ *
+ * La libreria allinea in alto OGNI cella di OGNI tabella dell'editor
+ * (`.ProseMirror td, .ProseMirror th { vertical-align: top }`), e quella riga
+ * batteva l'`align-bottom` che il componente chiede: con due righe di testa
+ * l'anno galleggiava sopra la colonna che intitola invece di poggiarci sopra. La
+ * classe resta dov'è (`tabella-di-serie.tsx`, che è dove si legge l'intenzione);
+ * qui si toglie di mezzo la regola che la copriva. */
+.bn-editor [data-content-type='tabella'] thead th {
+  vertical-align: bottom;
+}
+
+/* LA NOTA STA SOTTO IL BLOCCO DATI, non di fianco — e il colpevole è il contenitore
+ * della libreria.
+ *
+ * ⚠️ MISURATO SUL REPORT VERO: il blocco «tabella» è un frammento di DUE fratelli
+ * (`blocchi-dati.tsx`: la cornice, e la nota fuori dalla cornice per parola
+ * dell'owner), e il div che BlockNote gli mette attorno è
+ * `.bn-block-content { display: flex }` — cioè una RIGA. I due fratelli si
+ * affiancavano: cornice a x=474 larga 500,94 dentro un blocco largo 720, e la nota
+ * a x=974,94 in colonna sulla destra. Sulla carta la nota era già sotto, perché lì
+ * i due fratelli stanno in una `View` che impila.
+ *
+ * ⚠️ E NON ERA SOLO LA NOTA: rubando 219 px alla cornice, la riga schiacciava anche
+ * la TABELLA — 498,94 px invece di 720, colonna delle voci a 88 px, e i nomi lunghi
+ * («Ricavi delle vendite e delle prestazioni») su due righe coi puntini. Impilata,
+ * la tabella si riprende la cornice intera e la colonna delle voci respira: è lo
+ * stesso guasto, visto dall'altra parte.
+ *
+ * ⚠️ TUTTI E TRE I BLOCCHI DATI, non più la sola tabella. Questa regola nacque
+ * quando la tabella era l'unica ad avere due fratelli; dal 2026-09-28 anche il
+ * grafico e la fila di indicatori portano la nota delle celle vuote
+ * (`blocchi-dati.tsx::DisegnoDelBloccoDati`), e rimasta sulla sola tabella lasciava la
+ * nota degli indicatori in colonna sulla destra, a stringere la cornice (visto in
+ * staging il 2026-09-30). */
+.bn-editor
+  .bn-block-content:is(
+    [data-content-type='grafico'],
+    [data-content-type='tabella'],
+    [data-content-type='indicatori']
+  ) {
+  flex-direction: column;
+}
+
+/* IL CORPO DELLA NOTA, che la classe da sola non riesce a imporre.
+ *
+ * ⚠️ MISURATO: la nota portava `text-[7px]` (`tabella-di-serie.tsx`, oggi `text-[10px]`)
+ * e nel browser il corpo calcolato era **13,5px**, cioè quello della prosa di allora — più
+ * grande delle celle che commenta, che stavano a 12. A vincere era
+ * `.bn-default-styles p { font-size: inherit }` della libreria, perché allora
+ * `blocknote` passava DOPO `utilities` e fra due layer decide l'ordine, non la
+ * specificità. ⚠️ DA U139 QUELL'ORDINE È DICHIARATO in cima al file e adesso le
+ * utility vincono; questa regola resta lo stesso, perché sta fuori da ogni layer e
+ * quindi non dipende da quella dichiarazione.
+ *
+ * ⚠️ IL NUMERO È SCRITTO DUE VOLTE, ed è dichiarato: la classe resta dov'è, perché
+ * è lei a valere fuori dall'editor (la scena fuori schermo, le prove in jsdom) ed è
+ * lei la gemella della carta (`documento-in-pezzi.ts::CORPO_DELLA_NOTA`, `daSchermo(10)`).
+ * Qui si rimette in piedi lo stesso dieci. Le due case si cambiano insieme, e ognuna
+ * ha il suo pin — come il rientro delle righe e l'altezza della banda.
+ *
+ * ⚠️ IL FRATELLO DIRETTO E NON UN DISCENDENTE: `> p` colpisce la sola nota, che è
+ * figlia del contenitore del blocco. Dentro la cornice ci sono altri `<p>` — il
+ * messaggio del blocco perduto, la riga di variazione di un indicatore — e ognuno ha
+ * il suo corpo. Vale per i tre blocchi dati, che la nota la portano tutti e tre. */
+.bn-editor
+  .bn-block-content:is(
+    [data-content-type='grafico'],
+    [data-content-type='tabella'],
+    [data-content-type='indicatori']
+  )
+  > p {
+  font-size: 10px;
+}
+
+/* Il blocco selezionato: la libreria ci mette sopra un velo azzurro e una
+ * cornice interna di 4px. Il velo lo togliamo — un fondo pieno coprirebbe il
+ * testo, e un fondo trasparente non aggiunge niente al segno — e resta l'anello,
+ * nel colore con cui il prodotto segna il fuoco. */
+.bn-editor .bn-block-content.ProseMirror-selectednode > *::after,
+.bn-editor .ProseMirror-selectednode > .bn-block-content > *::after,
+.bn-editor .bn-block-content .ProseMirror-selectednode::after,
+.bn-editor .bn-inline-content .ProseMirror-selectednode::after {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--ring);
+}
+
+/* MENO I TRE BLOCCHI DATI, che un anello intorno non lo vogliono.
+ *
+ * Un grafico e una tabella si guardano, e cliccarli è il gesto con cui ci si
+ * arriva: circondarli di colore fa sembrare acceso qualcosa che è solo scelto,
+ * e in un report stampato quel segno non esiste. ⚠️ LA SELEZIONE RESTA — è come
+ * si cancella un blocco dati col tasto, ed è la ragione per cui qui si toglie il
+ * SEGNO e non la selezione.
+ *
+ * Il `:is()` non alza la specificità (un attributo pesa come una classe): a
+ * vincere sulla regola qui sopra è `.bn-block-content` in più nella catena. Le
+ * tre forme sono le stesse tre che la libreria prevede per un blocco — la quarta
+ * è del testo in linea, e un blocco dati non ne ha. */
+.bn-editor
+  .bn-block-content:is(
+    [data-content-type='grafico'],
+    [data-content-type='tabella'],
+    [data-content-type='indicatori']
+  ).ProseMirror-selectednode
+  > *::after,
+.bn-editor
+  .ProseMirror-selectednode
+  > .bn-block-content:is(
+    [data-content-type='grafico'],
+    [data-content-type='tabella'],
+    [data-content-type='indicatori']
+  )
+  > *::after,
+.bn-editor
+  .bn-block-content:is(
+    [data-content-type='grafico'],
+    [data-content-type='tabella'],
+    [data-content-type='indicatori']
+  )
+  .ProseMirror-selectednode::after {
+  box-shadow: none;
+}
+
+/* E LA ZONA BLOCCO NEMMENO: un anello attorno a lei si legge come un campo da riempire.
+ *
+ * ⚠️ IL GUASTO, VISTO SUL FOGLIO VERO: una zona VUOTA non ha contenuto scrivibile, quindi
+ * il clic la SELEZIONA invece di portarci dentro il cursore, e l'anello squadrato che ne
+ * usciva la faceva sembrare una casella di testo — al collaudo l'owner ci ha provato a
+ * scrivere dentro. Qui l'anello e il velo azzurro se ne vanno tutti e due, e a dire
+ * «questa è scelta» resta il riquadro della zona, che si fa un po' più pieno (la regola
+ * qui sotto): un solo segno, e dello stesso registro del riposo.
+ *
+ * ⚠️ TRE FORME PERCHÉ TRE NE PREVEDE LA LIBRERIA per un blocco; la quarta è del testo in
+ * linea, e la testa di una zona non ne ha. */
+.bn-editor .bn-block-content[data-content-type='zona'].ProseMirror-selectednode > *::after,
+.bn-editor .ProseMirror-selectednode > .bn-block-content[data-content-type='zona'] > *::after,
+.bn-editor .bn-block-content[data-content-type='zona'] .ProseMirror-selectednode::after {
+  box-shadow: none;
+  background-color: transparent;
+}
+/* ⚠️ IL SEGNO STA SUL RIQUADRO, cioè sul BLOCCO, e non sul contenuto: è il riquadro che si
+ * vede, ed è lui che deve dire di essere preso. Il `:has()` guarda solo dentro la node view
+ * della zona — il gruppo dei figli le sta FUORI, da fratello — così un grafico scelto
+ * dentro la zona non accende tutto il riquadro. */
+.bn-editor
+  .bn-block:has(> .bn-react-node-view-renderer > .bn-block-content[data-content-type='zona']):has(
+    > .bn-react-node-view-renderer.ProseMirror-selectednode,
+    > .bn-react-node-view-renderer .ProseMirror-selectednode
+  ) {
+  background-color: var(--velatura-della-zona-scelta);
+}
+
+/* Le superfici che galleggiano: barra di formattazione, menu della maniglia e
+ * delle tabelle, menu «/», popover del collegamento.
+ *
+ * Le veste `@blocknote/shadcn` con classi di Tailwind che vivono in
+ * `node_modules`, dove lo scanner non guarda: quelle che il resto del prodotto
+ * non chiede mai — la larghezza minima, il filo del bordo — non arrivano nel
+ * foglio, e la superficie resterebbe senza. Qui gliele diamo noi, dai token. */
+.bn-root .bn-toolbar,
+.bn-root .bn-menu-dropdown,
+.bn-root .bn-suggestion-menu,
+.bn-root .bn-popover-content {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--bn-shadow-medium);
+}
+/* Il menu della maniglia è un elenco di verbi corti («Elimina», «Modifica»): gli
+ * bastano le otto rem di un menu qualunque. Il «/» invece è la scelta di che cosa
+ * si sta per scrivere, e ogni voce porta a destra il carattere markdown che la
+ * produce: alle stesse otto rem il titolo e il carattere si toccavano. */
+.bn-root .bn-menu-dropdown {
+  min-width: 8rem;
+}
+.bn-root .bn-suggestion-menu {
+  min-width: 18rem;
+}
+
+/* Il tasto premuto della barra (grassetto acceso, corsivo acceso): senza,
+ * l'unico segno che lo stile è attivo non esisterebbe. */
+.bn-root .bn-toolbar [aria-pressed='true'] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* La maniglia laterale e le maniglie delle tabelle: la libreria le vorrebbe di
+ * un grigio della scala di Tailwind, che il prodotto non usa. */
+.bn-root .bn-side-menu,
+.bn-root .bn-table-handle,
+.bn-root .bn-extend-button {
+  color: var(--muted-foreground);
+}
+
+/* LA MANIGLIA DEL BLOCCO, in misura da editor.
+ *
+ * Il bottone è quello del prodotto (`blocchi-report.tsx::ManigliaDelBlocco`) e di
+ * serie è alto come un bottone di pagina — 36px accanto a una riga di testo: un
+ * oggetto, non un appiglio. Si stringe a 24px, che è il pavimento: la maniglia è
+ * l'UNICO modo di spostare un blocco (BlockNote 0.54 non ha nessuna scorciatoia
+ * da tastiera per farlo, misurato), e sotto i 24px il bersaglio smette di
+ * rispettare la misura minima. Il glifo cala con lei.
+ *
+ * E al passaggio del mouse NON si evidenzia: il fondo `--accent` che la variante
+ * «ghost» del bottone le dà accanto a ogni riga è rumore, e il segno che la
+ * maniglia è viva è che COMPARE. Resta il colore, che passa a
+ * `--accent-foreground` e basta a dire «ci sei sopra», e resta l'anello del fuoco
+ * da tastiera, che è un'altra cosa. */
+.bn-root .bn-side-menu .bn-button {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.bn-root .bn-side-menu .bn-button svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+.bn-root .bn-side-menu .bn-button:hover {
+  background-color: transparent;
+}
+
+/* E IL SUO MENU IN SCALA CON LEI: una maniglia di 24px che apre un menu da pagina
+ * sono due oggetti, non uno.
+ *
+ * Le misure sono quelle del menu «/» qui sotto — stesso carattere, stesso respiro
+ * intorno alle voci — perché sono le due superfici che si aprono dal foglio e
+ * affiancate non si devono distinguere. La voce «Aggiungi blocco» resta dov'è: è
+ * il gesto che dà un paragrafo sotto un blocco in fondo al documento, dove U42
+ * aveva tolto il «+».
+ *
+ * ⚠️ IL SELETTORE NON PARTE DA `.bn-root`, ed è l'unico di questa sezione: il
+ * menu è un `DropdownMenu` del prodotto e Radix lo porta in un portale in fondo
+ * al `body`, fuori dal foglio. `.bn-menu-maniglia` è il nome con cui la maniglia
+ * se lo aggancia (`blocchi-report.tsx`), non una classe della libreria. */
+.bn-menu-maniglia {
+  min-width: 7rem;
+  padding: 0.25rem;
+}
+.bn-menu-maniglia [data-slot='dropdown-menu-item'],
+.bn-menu-maniglia [data-slot='dropdown-menu-checkbox-item'] {
+  padding: 0.25rem 0.5rem;
+  font-size: var(--text-xs);
+}
+/* La spunta delle due voci della tabella sta a sinistra e vuole il suo posto: il
+ * rientro cala con la voce, e resta più largo del segno. */
+.bn-menu-maniglia [data-slot='dropdown-menu-checkbox-item'] {
+  padding-left: 1.5rem;
+}
+.bn-menu-maniglia [data-slot='dropdown-menu-checkbox-item'] svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Il segnaposto della riga vuota («Inserisci testo o digita '/' per i comandi»).
+ *
+ * La libreria lo scrive in CORSIVO: ma il corsivo, nello schema, è uno stile che
+ * chi scrive può dare — vederlo su una riga vuota fa credere che sia già acceso.
+ * E lo lascia al colore del testo: qui si tira indietro, perché è un
+ * suggerimento e non una riga del documento. */
+.bn-editor .bn-block-content:has(.ProseMirror-trailingBreak:only-child)::after {
+  font-style: normal;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+/* Il cursore di caduta del trascinamento: la barra che dice dove finirà il
+ * blocco che si sta spostando.
+ *
+ * Sta FUORI da `.bn-editor` — ProseMirror lo appende accanto al foglio — quindi
+ * il selettore non può partire di lì. La libreria lo farebbe azzurro fisso e
+ * spesso 5px; lo spessore lo decide l'editor (`dropCursor` in
+ * `blocchi-report.tsx`, dove il colore è NEGATO), il colore questa regola. */
+.prosemirror-dropcursor-block,
+.prosemirror-dropcursor-vertical,
+.prosemirror-dropcursor-inline {
+  background-color: var(--ring);
+  border-radius: 9999px;
+}
+
+/* La barra di formattazione, in misura da editor.
+ *
+ * Quattro bottoni con il respiro di un bottone di pagina fanno una barra alta
+ * come una riga di testo, che galleggiando sopra la selezione copre quello che
+ * si sta formattando. */
+.bn-root .bn-formatting-toolbar {
+  padding: 0.125rem;
+  gap: 0;
+}
+.bn-root .bn-formatting-toolbar button {
+  height: 1.75rem;
+  min-width: 1.75rem;
+  padding-inline: 0.375rem;
+}
+.bn-root .bn-formatting-toolbar button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Position the editor's Base UI arrows outside the tooltip. The dependency's
+ * directional Tailwind utilities are not emitted by the app's source scan. */
+.bn-root [data-slot='tooltip-content'] {
+  position: relative;
+}
+.bn-root [data-slot='tooltip-content'] > [aria-hidden='true'][data-side] {
+  translate: none;
+}
+.bn-root [data-slot='tooltip-content'] > [aria-hidden='true'][data-side='top'] {
+  top: auto;
+  bottom: -5px;
+}
+.bn-root [data-slot='tooltip-content'] > [aria-hidden='true'][data-side='bottom'] {
+  top: -5px;
+  bottom: auto;
+}
+.bn-root [data-slot='tooltip-content'] > [aria-hidden='true'][data-side='left'] {
+  left: auto;
+  right: -5px;
+}
+.bn-root [data-slot='tooltip-content'] > [aria-hidden='true'][data-side='right'] {
+  left: -5px;
+  right: auto;
+}
+
+/* Il menu «/», in misura da elenco.
+ *
+ * Senza tetto è alto quanto le voci che ha — otto ne fanno mezzo schermo — e la
+ * libreria non gliene dà nessuno: il tetto e lo scorrimento sono qui. Le voci
+ * arrivano già compatte dall'editor (`size: 'small'`), e questa è la misura
+ * intorno a loro. */
+.bn-root .bn-suggestion-menu {
+  max-height: min(18rem, 50vh);
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+.bn-root [role='option'].bn-suggestion-menu-item {
+  padding: 0.25rem 0.5rem;
+  gap: 0.5rem;
+  font-size: var(--text-xs);
+}
+.bn-root [role='option'].bn-suggestion-menu-item svg {
+  width: 1rem;
+  height: 1rem;
+}
+/* `[role='option']` non è pignoleria: la variante shadcn ridà la classe della voce
+ * anche all'icona e al titolo dentro di lei, e senza il ruolo queste misure si
+ * sommerebbero tre volte sulla stessa riga (misurato: 36 px invece di 28).
+ *
+ * La voce su cui si è arrivati con le frecce, e quella sotto il mouse. La
+ * libreria le evidenzia con classi di Tailwind che vivono in `node_modules`,
+ * dove lo scanner non guarda: senza questa regola le frecce muovono la
+ * selezione e non si vede. */
+.bn-root [role='option'].bn-suggestion-menu-item[aria-selected='true'],
+.bn-root [role='option'].bn-suggestion-menu-item:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+/* LA SEZIONE PESA PIÙ DELLA VOCE, e non il contrario.
+ *
+ * «Base», «Numeri» sono la mappa del menu: si leggono per prime e dicono dove
+ * cercare, mentre le voci si scorrono. Erano il gradino più piccolo del menu —
+ * `--text-xs` contro `--text-sm` — cioè il contrario di come si legge un elenco
+ * diviso in gruppi. Le due misure si scambiano, e la sezione prende anche il peso
+ * del carattere.
+ *
+ * Il titolo della voce è il primo dei due `div` che la libreria mette accanto
+ * all'icona: senza questa regola lo scriverebbe alla misura del testo del foglio,
+ * che in un elenco sono due gradini di troppo. */
+.bn-root [role='option'].bn-suggestion-menu-item > div > div:first-child {
+  font-size: var(--text-xs);
+}
+.bn-root .bn-suggestion-menu-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+}
+
+/* UNA LINEA FRA I GRUPPI (U60).
+ *
+ * ⚠️ DEROGA DICHIARATA alla regola del repo «niente separatori se non richiesti»:
+ * qui li chiede l'owner, rispondendo a R22 — l'intestazione da sola non bastava a
+ * far vedere dove finisce un gruppo e comincia il prossimo. Non è decorazione, è
+ * la divisione dell'elenco.
+ *
+ * Sul PRIMO gruppo no: una linea in cima al menu sarebbe un bordo, non una
+ * divisione. */
+.bn-root .bn-suggestion-menu-label:not(:first-child) {
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+/* L'INTESTAZIONE ENTRA IN VISTA INSIEME ALLA SUA PRIMA VOCE (R35).
+ *
+ * ⚠️ IL GUASTO MISURATO: scorrendo il menu con le frecce fino in fondo e premendo
+ * «giù» ancora si torna alla prima voce, ma l'intestazione del suo gruppo restava
+ * fuori dallo schermo — la libreria porta in vista la VOCE selezionata
+ * (`SuggestionMenuItem.tsx`, `scrollIntoView({ block: 'nearest' })`) e
+ * l'intestazione non è una voce, quindi nessuno la conta. Misurato: `scrollTop`
+ * 32 e l'intestazione a −27 px dal bordo; adesso `scrollTop` 0 e l'intestazione
+ * dentro.
+ *
+ * Il margine di scorrimento la conta: la prima voce di un gruppo si dichiara alta
+ * quanto lei più la sua intestazione, e lo scorrimento minimo che la libreria
+ * calcola porta in vista tutte e due. Sale a 2,5rem — l'intestazione con la sua
+ * linea di divisione e il suo margine sopra — e in giù non costa niente: verso il
+ * basso `nearest` guarda il bordo INFERIORE, che il margine non sposta. */
+.bn-root .bn-suggestion-menu-label + [role='option'].bn-suggestion-menu-item {
+  scroll-margin-top: 2.5rem;
+}
+
+/* IL CARATTERE MARKDOWN accanto alla voce: `#`, `-`, `1.`, `>`.
+ *
+ * Sta nello slot `badge` della libreria (quello che portava le scorciatoie, e che
+ * R14 aveva svuotato), e la variante shadcn lo veste da pastiglia — bordo, fondo,
+ * angoli tondi — con classi che vivono in `node_modules`: metà arrivano nel
+ * foglio perché il prodotto le usa altrove, metà no, e ne verrebbe fuori una
+ * pastiglia a metà accanto a ogni riga. Qui la pastiglia si disfa e resta il
+ * carattere: a spaziatura fissa, perché è ciò che si batte nel foglio, e nel
+ * grigio dei suggerimenti, perché è un promemoria e non una voce in più. */
+.bn-root [role='option'].bn-suggestion-menu-item [data-position='right'],
+.bn-root [role='option'].bn-suggestion-menu-item [data-position='right'] * {
+  background-color: transparent;
+  color: var(--muted-foreground);
+  border: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* Match the studio home's 90% browser-zoom density on desktop. Compensate the
+ * viewport height so the scroll area still reaches the bottom of the window. */
+@media (min-width: 1024px) {
+  .studio-home-shell {
+    zoom: 0.9;
+    height: calc(100vh / 0.9);
+  }
+}
+
+/* The home exits while still mounted; route loading never cuts this movement short. */
+html[data-studio-chat-transition] [data-studio-home] > :not(:first-child) {
+  animation: studio-clients-leave 440ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+html[data-studio-chat-transition] [data-studio-header],
+html[data-studio-chat-transition] [data-studio-intro-header] {
+  animation: studio-header-leave 380ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+html[data-studio-chat-transition] [data-studio-greeting] {
+  animation: studio-header-leave 360ms 80ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+html[data-studio-chat-transition] .studio-chat-origin {
+  animation: studio-composer-lift 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-studio-chat-transition='loading'] [data-slot='sidebar-container'],
+html[data-studio-chat-transition='loading'] .studio-chat-destination {
+  opacity: 0;
+}
+html[data-studio-chat-transition='entering'] [data-slot='sidebar-container'] {
+  animation: studio-sidebar-enter 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-studio-chat-transition='entering'] .studio-chat-destination {
+  animation: studio-chat-enter 600ms 100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes studio-clients-leave {
+  to {
+    opacity: 0;
+    transform: translateY(48px);
+    filter: blur(3px);
+  }
+}
+@keyframes studio-header-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-36px);
+    filter: blur(2px);
+  }
+}
+@keyframes studio-composer-lift {
+  to {
+    transform: translateY(-24px);
+  }
+}
+@keyframes studio-sidebar-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-64px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes studio-chat-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-studio-chat-transition] [data-studio-home] *,
+  html[data-studio-chat-transition] [data-studio-header],
+  html[data-studio-chat-transition] [data-slot='sidebar-container'],
+  html[data-studio-chat-transition] .studio-chat-destination {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* This layer survives the route unmount, covering layout changes and loading fallbacks. */
+[data-studio-chat-snapshot] {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  margin: 0;
+  background: var(--background);
+  pointer-events: none;
+}
+html[data-studio-chat-transition='entering'] [data-studio-chat-snapshot] {
+  animation: studio-bridge-reveal 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes studio-bridge-reveal {
+  to {
+    opacity: 0;
+  }
+}
+
+/* A quick return to the studio: only compositor-friendly properties, no exit delay. */
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-studio-chat-transition]) [data-studio-arrival='return'] {
+    animation: studio-home-arrive 140ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+@keyframes studio-home-arrive {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Keep the selected destination unmistakable, including the collapsed navigation menu. */
+.workspace-navigation [data-active='true'],
+[data-workspace-current='true'] {
+  background-color: var(--color-action);
+  color: white;
+}
+.workspace-navigation [data-active='true']:hover,
+.workspace-navigation [data-active='true']:focus-visible,
+[data-workspace-current='true']:hover,
+[data-workspace-current='true']:focus {
+  background-color: var(--color-action-hover);
+  color: white;
+}
+.workspace-navigation [data-active='true'] svg {
+  color: inherit;
+}
+.workspace-navigation
+  [data-sidebar='menu-button'][data-active='true']
+  ~ [data-sidebar='menu-badge'] {
+  color: var(--sidebar-primary-foreground);
+}
+
+/* One center axis for every control in the collapsed workspace rail. */
+[data-collapsible='icon'] .workspace-navigation [data-sidebar='menu-button'] {
+  margin-inline: auto;
+}
+
+/* A single welcome sequence: reserve all layout space, animate only paint/compositing. */
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-studio-chat-transition])
+    [data-studio-arrival='welcome']
+    [data-studio-intro-header] {
+    animation: studio-welcome-fade 360ms ease-out both;
+  }
+  html:not([data-studio-chat-transition]) [data-studio-arrival='welcome'] .studio-welcome-letter {
+    animation: studio-welcome-letter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(60ms + var(--studio-letter-index) * 23ms);
+  }
+  html:not([data-studio-chat-transition]) [data-studio-arrival='welcome'] [data-studio-subtitle] {
+    animation: studio-welcome-fade 380ms 120ms ease-out both;
+  }
+  html:not([data-studio-chat-transition]) [data-studio-arrival='welcome'] .studio-chat-origin {
+    animation: studio-welcome-composer 460ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  html:not([data-studio-chat-transition]) [data-studio-arrival='welcome'] > :not(:first-child) {
+    animation: studio-welcome-fade 460ms 280ms ease-out both;
+  }
+}
+@keyframes studio-welcome-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes studio-welcome-letter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes studio-welcome-composer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Financial statements: period colors express actual/forecast; row tones express accounting role. */
+:root {
+  --statement-paper: #ffffff;
+  --statement-forecast-ink: #246477;
+  --statement-highlight: #9a6700;
+  --statement-body: #20252b;
+  --statement-secondary: #59616b;
+  --statement-ink: #162a52;
+  --statement-rule: #d1d5db;
+  --statement-section: #c7d8e8;
+  --statement-group: #e3ecf4;
+  --statement-subtotal: #f1f5f9;
+  --statement-result: #b7cee2;
+  --statement-hover: #e9ecef;
+  --statement-negative: #b42318;
+}
+.dark {
+  --statement-paper: #1e2530;
+  --statement-forecast-ink: #a6d5df;
+  --statement-highlight: #edbd6b;
+  --statement-body: #e5e7eb;
+  --statement-secondary: #b8c0cb;
+  --statement-ink: #e3eaf5;
+  --statement-rule: #4b5563;
+  --statement-section: #374151;
+  --statement-group: #374151;
+  --statement-subtotal: #242c38;
+  --statement-result: #323d4d;
+  --statement-hover: #414d5e;
+  --statement-negative: #fda4a4;
+}
+.statement-row[data-row-role='result'] > td {
+  border-top: 2px solid var(--statement-rule);
+}
+.statement-row[data-row-role='final'] > td {
+  border-top: 3px double var(--statement-ink);
+  border-bottom: 3px double var(--statement-ink);
+}
+
+.statement-recalculation-progress {
+  appearance: none;
+  border: 0;
+  background: rgb(255 255 255 / 25%);
+  color: white;
+}
+.statement-recalculation-progress::-webkit-progress-bar {
+  background: rgb(255 255 255 / 25%);
+}
+.statement-recalculation-progress::-webkit-progress-value {
+  background: white;
+}
+.statement-recalculation-progress::-moz-progress-bar {
+  background: white;
+}
+
+/*
+  LA BARRA DI SCORRIMENTO DELLE TENDINE. Radix nasconde apposta quella del viewport della
+  Select (`scrollbar-width: none` e `::-webkit-scrollbar { display: none }`, in un suo
+  <style> senza layer), e con il tetto di altezza di `components/ui/select.tsx` una lista
+  lunga non direbbe che continua. Fuori da ogni @layer e con due attributi, per vincere su
+  quella regola; i colori sono quelli di `scrollbar-rounded`.
+*/
+[data-slot='select-content'] [data-radix-select-viewport] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+[data-slot='select-content'] [data-radix-select-viewport]::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+}
+[data-slot='select-content'] [data-radix-select-viewport]::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+}
+
+/*
+ * Qontica Studio is a tool for a whole working day, so it is dense: one scale for every page and
+ * dialog (hence on :root, dialogs are portalled out of the page), and none of it outside Studio.
+ * The sidebar keeps Advisory's measures, so that the two read as one product.
+ */
+:root:has([data-studio-density]) {
+  --spacing: 0.2rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 0.9375rem;
+  --text-xl: 1rem;
+  --text-2xl: 1.125rem;
+  --text-3xl: 1.25rem;
+}
+[data-studio-density] [data-sidebar='sidebar'],
+[data-studio-density] [data-slot='sidebar-gap'] {
+  --spacing: 0.25rem;
+}
